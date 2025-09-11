@@ -48,14 +48,14 @@ export default function StudentSection() {
     const selectedIdRaw = selected?.id;
     if (!selectedIdRaw) return;
     const selectedId = selectedIdRaw as string;
-    let ignore = false;
+    const abortController = new AbortController();
     async function loadAvailability() {
       const { data, error } = await supabase
         .from("availability")
         .select("*")
         .eq("person_type", "student")
         .eq("person_id", selectedId);
-      if (!ignore) {
+      if (!abortController.signal.aborted) {
         if (error) {
           setMessage(null);
           setError(error.message);
@@ -75,6 +75,7 @@ export default function StudentSection() {
       )
       .subscribe();
     return () => {
+      abortController.abort();
       supabase.removeChannel(channel);
     };
   }, [selected?.id, supabase]);

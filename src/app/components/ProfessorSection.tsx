@@ -49,14 +49,14 @@ export default function ProfessorSection() {
   useEffect(() => {
     const selectedId = selected?.id;
     if (!selectedId) return;
-    let ignore = false;
+    const abortController = new AbortController();
     async function loadAvailability() {
       const { data, error } = await supabase
         .from("availability")
         .select("*")
         .eq("person_type", "professor")
         .eq("person_id", selectedId);
-      if (!ignore) {
+      if (!abortController.signal.aborted) {
         if (error) {
           setMessage(null);
           setError(error.message);
@@ -76,6 +76,7 @@ export default function ProfessorSection() {
       )
       .subscribe();
     return () => {
+      abortController.abort();
       supabase.removeChannel(channel);
     };
   }, [selected?.id, supabase]);
