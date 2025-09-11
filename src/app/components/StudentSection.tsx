@@ -23,7 +23,7 @@ export default function StudentSection() {
       const { data, error } = await supabase.from("students").select("*").order("created_at", { ascending: false });
       if (error) {
         setError(error.message);
-      } else if (!ignore) {
+      } else if (!ignore) {x
         setList(data as Student[]);
       }
       setLoading(false);

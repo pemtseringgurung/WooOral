@@ -78,8 +78,9 @@ export default function AvailabilityForm({ personId, personType, initial, onUpse
       setIsSubmitting(true);
       await onUpsert(rows);
       setSuccess("Availability updated");
-    } catch (err: any) {
-      setError(err?.message ?? "Failed to save availability");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save availability";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

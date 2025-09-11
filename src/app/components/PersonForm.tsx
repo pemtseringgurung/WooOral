@@ -24,7 +24,7 @@ export default function PersonForm({ initial, onSubmit, onCancel, submitLabel, t
   type TimeRange = { sh: string; sm: string; smd: Meridiem; eh: string; em: string; emd: Meridiem };
   const emptyRange = (): TimeRange => ({ sh: "", sm: "00", smd: "AM", eh: "", em: "00", emd: "AM" });
   const [daySlots, setDaySlots] = useState<Record<string, TimeRange[]>>(() => {
-    const map: Record<string, TimeRange[]> = {} as any;
+    const map: Record<string, TimeRange[]> = {} as Record<string, TimeRange[]>;
     for (const d of days) map[d] = [];
     return map;
   });
@@ -103,13 +103,14 @@ export default function PersonForm({ initial, onSubmit, onCancel, submitLabel, t
         setEmail("");
         setAddAvailability(false);
         setDaySlots(() => {
-          const map: Record<string, TimeRange[]> = {} as any;
+          const map: Record<string, TimeRange[]> = {} as Record<string, TimeRange[]>;
           for (const d of days) map[d] = [];
           return map;
         });
       }
-    } catch (err: any) {
-      setError(err?.message ?? "Something went wrong");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

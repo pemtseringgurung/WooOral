@@ -130,7 +130,6 @@ export default function ProfessorSection() {
   async function handleUpsertAvailability(rows: UpsertAvailabilityInput[]) {
     setError(null);
     setMessage(null);
-    // Simplest strategy: delete all existing for this person + insert new
     if (!selected) return;
     const { error: delErr } = await supabase
       .from("availability")
