@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Header from "@/app/components/Header";
 import AddProfessorForm from "@/app/components/AddProfessorForm";
+import SetDefensePeriodForm from "@/app/components/SetDefensePeriodForm";
+import SetPasswordForm from "@/app/components/SetPasswordForm";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -11,6 +13,12 @@ export default function AdminDashboard() {
     switch (activeSection) {
       case "add-professors":
         return <AddProfessorForm />;
+      
+      case "defense-period":
+        return <SetDefensePeriodForm />;
+      
+      case "password":
+        return <SetPasswordForm />;
 
       default:
         return (
