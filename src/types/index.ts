@@ -44,4 +44,18 @@ export interface UpsertAvailabilityInput {
   end_time: string;
 }
 
+export interface DefensePeriod {
+  id: number;
+  period_start: string; // YYYY-MM-DD format
+  period_end: string;   // YYYY-MM-DD format
+  created_at: string;
+}
+
+export interface Password {
+  id: number;
+  student_password: string;
+  professor_password: string;
+  created_at: string;
+}
+
 
