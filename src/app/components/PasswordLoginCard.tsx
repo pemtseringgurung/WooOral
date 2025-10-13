@@ -13,16 +13,20 @@ export default function PasswordLoginCard({ type, onSuccess }: PasswordLoginCard
   const handleSubmit = async (password: string): Promise<boolean> => {
     try {
       const supabase = getSupabaseClient();
-      const field = type === "student" ? "student_password" : "professor_password";
       
       const { data, error: dbError } = await supabase
         .from('passwords')
-        .select(field)
+        .select('student_password, professor_password')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
 
-      if (dbError || !data || data[field] !== password) {
+      if (dbError || !data) {
+        return false;
+      }
+
+      const storedPassword = type === "student" ? data.student_password : data.professor_password;
+      if (storedPassword !== password) {
         return false;
       }
 
@@ -31,7 +35,7 @@ export default function PasswordLoginCard({ type, onSuccess }: PasswordLoginCard
       }
       // TODO: Redirect to appropriate dashboard
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   };

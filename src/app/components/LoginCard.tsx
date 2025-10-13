@@ -31,7 +31,7 @@ export default function LoginCard({
       if (!success) {
         setError("Incorrect password");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred");
     } finally {
       setIsLoading(false);
