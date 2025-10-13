@@ -97,7 +97,10 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
 
       if (error) {
         console.error('Error saving defense period:', error);
-        setMessage({ type: 'error', text: 'Failed to save defense period. Please try again.' });
+        setMessage({ 
+          type: 'error', 
+          text: `Failed to save defense period: ${error.message || 'Unknown error'}. Check console for details.` 
+        });
         return;
       }
 
