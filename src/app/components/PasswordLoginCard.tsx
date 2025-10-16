@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { getSupabaseClient } from "@/lib/supabase";
 import LoginCard from "./LoginCard";
 
 interface PasswordLoginCardProps {
@@ -12,22 +11,18 @@ interface PasswordLoginCardProps {
 export default function PasswordLoginCard({ type, onSuccess }: PasswordLoginCardProps) {
   const handleSubmit = async (password: string): Promise<boolean> => {
     try {
-      const supabase = getSupabaseClient();
-      
-      const { data, error: dbError } = await supabase
-        .from('passwords')
-        .select('student_password, professor_password')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      const response = await fetch("/api/auth/password-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ role: type, password })
+      });
 
-      if (dbError || !data) {
-        return false;
-      }
+      const result = await response.json();
 
-      const storedPassword = type === "student" ? data.student_password : data.professor_password;
-      if (storedPassword !== password) {
-        return false;
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || "Invalid password");
       }
 
       if (onSuccess) {
@@ -35,7 +30,8 @@ export default function PasswordLoginCard({ type, onSuccess }: PasswordLoginCard
       }
       // TODO: Redirect to appropriate dashboard
       return true;
-    } catch {
+    } catch (error) {
+      console.error(`${type} login failed`, error);
       return false;
     }
   };

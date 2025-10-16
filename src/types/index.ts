@@ -55,6 +55,7 @@ export interface Password {
   id: number;
   student_password: string;
   professor_password: string;
+  admin_password: string;
   created_at: string;
 }
 
