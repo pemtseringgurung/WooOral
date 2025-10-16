@@ -20,7 +20,6 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingProfessorId, setDeletingProfessorId] = useState<string | null>(null);
 
-  // Fetch professors on component mount
   useEffect(() => {
     fetchProfessors();
   }, []);
@@ -69,7 +68,6 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
     }
   };
 
-  // Filter professors based on search query
   const filteredProfessors = professors.filter(professor =>
     professor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     professor.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,7 +81,6 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setMessage({ type: 'error', text: 'Please enter a valid email address' });
@@ -120,13 +117,9 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
       setMessage({ type: 'success', text: 'Professor added successfully!' });
       setFormData({ name: "", email: "" });
       
-      // Add the new professor to the list
       if (data) {
         setProfessors(prev => [data as Professor, ...prev]);
-      }
-      
-      if (onProfessorAdded && data) {
-        onProfessorAdded(data as Professor);
+        onProfessorAdded?.(data as Professor);
       }
 
     } catch (error) {
@@ -143,158 +136,144 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
       ...prev,
       [name]: value
     }));
-    
-    // Clear message when user starts typing
     if (message) {
       setMessage(null);
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div className="max-w-md mx-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200">
+    <div className="space-y-12">
+      <div className="max-w-xl mx-auto space-y-6">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
             Add Professor
           </h2>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Invite faculty to manage oral defenses
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Enter professor's full name"
-              className="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400"
-              disabled={isLoading}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter professor's full name"
+                className="w-full px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                disabled={isLoading}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Enter professor's email address"
-              className="w-full px-4 py-3 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400"
-              disabled={isLoading}
-            />
+            <div>
+              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="name@wooster.edu"
+                className="w-full px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           {message && (
-            <div className={`p-3 rounded-lg text-sm ${
+            <div className={`rounded-md border px-4 py-3 text-sm ${
               message.type === 'success' 
-                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' 
-                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300' 
+                : 'border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300'
             }`}>
               {message.text}
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-yellow-300 text-black font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:shadow-md"
-          >
-            {isLoading ? 'Adding Professor...' : 'Submit'}
-          </button>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex items-center justify-center px-4 py-2.5 rounded-md bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Adding…' : 'Submit'}
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* Professors List */}
-      <div className="max-w-4xl mx-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-lg">
-        <div className="p-6 border-b border-neutral-200 dark:border-neutral-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                Added Professors
-              </h3>
-              <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">
-                {professors.length} professor{professors.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-            
-            {/* Search Bar */}
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-64 pl-10 pr-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-neutral-50 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              />
-            </div>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              Added Professors
+            </h3>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              {professors.length} professor{professors.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2.5 pl-9 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500 text-sm"
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60">
           {loadingProfessors ? (
-            <div className="text-center py-8">
-              <div className="text-neutral-500 dark:text-neutral-400">Loading professors...</div>
+            <div className="text-center py-12">
+              <p className="text-neutral-500 dark:text-neutral-400">Loading professors...</p>
             </div>
           ) : filteredProfessors.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-neutral-500 dark:text-neutral-400">
+            <div className="text-center py-12">
+              <p className="text-neutral-500 dark:text-neutral-400">
                 {searchQuery ? 'No professors found matching your search' : 'No professors added yet'}
-              </div>
+              </p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <ul className="divide-y divide-neutral-200 dark:divide-neutral-800">
               {filteredProfessors.map((professor) => (
-                <div
+                <li
                   key={professor.id}
-                  className="flex items-center justify-between p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                  className="flex items-center justify-between px-4 py-3"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-neutral-200 dark:bg-neutral-700 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                        {professor.name.charAt(0).toUpperCase()}
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-semibold text-neutral-600 dark:text-neutral-200">
+                      {professor.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h4 className="font-medium text-neutral-900 dark:text-neutral-100">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                         {professor.name}
-                      </h4>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
                         {professor.email}
                       </p>
                     </div>
                   </div>
-                  
                   <button
                     onClick={() => deleteProfessor(professor.id)}
                     disabled={deletingProfessorId === professor.id}
-                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Remove professor"
+                    className="text-xs font-medium text-rose-500 hover:text-rose-600 disabled:opacity-50"
                   >
-                    {deletingProfessorId === professor.id ? (
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    )}
+                    {deletingProfessorId === professor.id ? 'Removing…' : 'Remove'}
                   </button>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </div>
       </div>

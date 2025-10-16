@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getSupabaseClient } from "@/lib/supabase";
+import { Eye, EyeOff } from "lucide-react";
 import type { Password } from "@/types/index";
-import { Eye, EyeOff, Lock, User, GraduationCap } from "lucide-react";
 
 interface SetPasswordFormProps {
   onPasswordUpdated?: (passwords: Password) => void;
@@ -12,7 +11,8 @@ interface SetPasswordFormProps {
 export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormProps) {
   const [formData, setFormData] = useState({
     student_password: "",
-    professor_password: ""
+    professor_password: "",
+    admin_password: ""
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -20,30 +20,23 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const [loadingPasswords, setLoadingPasswords] = useState(true);
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [showProfessorPassword, setShowProfessorPassword] = useState(false);
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
 
-  // Fetch current passwords on component mount
   useEffect(() => {
     fetchPasswords();
   }, []);
 
   const fetchPasswords = async () => {
     try {
-      const supabase = getSupabaseClient();
-      const { data, error } = await supabase
-        .from('passwords')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      const response = await fetch("/api/admin/passwords", { method: "GET" });
+      const data = await response.json();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
-        console.error('Error fetching passwords:', error);
-      } else if (data) {
-        setCurrentPasswords(data);
-        // Don't populate form with existing passwords for security
+      if (response.ok && data) {
+        setCurrentPasswords(data as Password);
         setFormData({
           student_password: "",
-          professor_password: ""
+          professor_password: "",
+          admin_password: ""
         });
       }
     } catch (error) {
@@ -56,12 +49,11 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.student_password || !formData.professor_password) {
-      setMessage({ type: 'error', text: 'Please enter both student and professor passwords' });
+    if (!formData.student_password || !formData.professor_password || !formData.admin_password) {
+      setMessage({ type: 'error', text: 'Please enter student, professor, and admin passwords' });
       return;
     }
 
-    // Password validation
     if (formData.student_password.length < 6) {
       setMessage({ type: 'error', text: 'Student password must be at least 6 characters long' });
       return;
@@ -72,8 +64,18 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
       return;
     }
 
+    if (formData.admin_password.length < 8) {
+      setMessage({ type: 'error', text: 'Admin password must be at least 8 characters long' });
+      return;
+    }
+
     if (formData.student_password === formData.professor_password) {
       setMessage({ type: 'error', text: 'Student and professor passwords must be different' });
+      return;
+    }
+
+    if ([formData.student_password, formData.professor_password].includes(formData.admin_password)) {
+      setMessage({ type: 'error', text: 'Admin password must be unique and different from student/professor passwords' });
       return;
     }
 
@@ -81,36 +83,24 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
     setMessage(null);
 
     try {
-      const supabase = getSupabaseClient();
-      
-      let data, error;
-      
-      if (currentPasswords) {
-        // Update existing passwords
-        ({ data, error } = await supabase
-          .from('passwords')
-          .update({
-            student_password: formData.student_password,
-            professor_password: formData.professor_password
-          })
-          .eq('id', currentPasswords.id)
-          .select()
-          .single());
-      } else {
-        // Create new passwords
-        ({ data, error } = await supabase
-          .from('passwords')
-          .insert([{
-            student_password: formData.student_password,
-            professor_password: formData.professor_password
-          }])
-          .select()
-          .single());
-      }
+      const response = await fetch("/api/admin/passwords", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          id: currentPasswords?.id,
+          student_password: formData.student_password,
+          professor_password: formData.professor_password,
+          admin_password: formData.admin_password
+        })
+      });
 
-      if (error) {
-        console.error('Error saving passwords:', error);
-        setMessage({ type: 'error', text: 'Failed to save passwords. Please try again.' });
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Error saving passwords:", result?.error);
+        setMessage({ type: "error", text: result?.error ?? "Failed to save passwords. Please try again." });
         return;
       }
 
@@ -119,17 +109,15 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
         text: `Passwords ${currentPasswords ? 'updated' : 'set'} successfully!` 
       });
       
-      // Clear form after successful submission
       setFormData({
         student_password: "",
-        professor_password: ""
+        professor_password: "",
+        admin_password: ""
       });
       
-      if (data) {
-        setCurrentPasswords(data as Password);
-        if (onPasswordUpdated) {
-          onPasswordUpdated(data as Password);
-        }
+      setCurrentPasswords(result as Password);
+      if (onPasswordUpdated) {
+        onPasswordUpdated(result as Password);
       }
 
     } catch (error) {
@@ -146,8 +134,6 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
       ...prev,
       [name]: value
     }));
-    
-    // Clear message when user starts typing
     if (message) {
       setMessage(null);
     }
@@ -165,148 +151,156 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   };
 
   return (
-    <div className="space-y-8">
-      <div className="max-w-md mx-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200">
+    <div className="max-w-xl mx-auto space-y-10">
+      <div className="space-y-4">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
             Set Passwords
           </h2>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-2">
-            Configure access passwords for students and professors
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Configure access passwords for students, professors, and administrators
           </p>
         </div>
 
         {loadingPasswords ? (
-          <div className="text-center py-8">
-            <div className="text-neutral-500 dark:text-neutral-400">Loading current passwords...</div>
+          <div className="text-center py-12">
+            <p className="text-neutral-500 dark:text-neutral-400">Loading current passwords...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Student Password */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4" />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
                   Student Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showStudentPassword ? "text" : "password"}
+                    name="student_password"
+                    value={formData.student_password}
+                    onChange={handleInputChange}
+                    placeholder="Enter student password (min. 6 characters)"
+                    className="w-full px-4 py-3 pr-12 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentPassword(!showStudentPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                    disabled={isLoading}
+                  >
+                    {showStudentPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-              </label>
-              <div className="relative">
-                <input
-                  type={showStudentPassword ? "text" : "password"}
-                  name="student_password"
-                  value={formData.student_password}
-                  onChange={handleInputChange}
-                  placeholder="Enter student password (min. 6 characters)"
-                  className="w-full px-4 py-3 pr-12 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowStudentPassword(!showStudentPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                  disabled={isLoading}
-                >
-                  {showStudentPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
               </div>
-            </div>
 
-            {/* Professor Password */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
                   Professor Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showProfessorPassword ? "text" : "password"}
+                    name="professor_password"
+                    value={formData.professor_password}
+                    onChange={handleInputChange}
+                    placeholder="Enter professor password (min. 6 characters)"
+                    className="w-full px-4 py-3 pr-12 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowProfessorPassword(!showProfessorPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                    disabled={isLoading}
+                  >
+                    {showProfessorPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
                 </div>
-              </label>
-              <div className="relative">
-                <input
-                  type={showProfessorPassword ? "text" : "password"}
-                  name="professor_password"
-                  value={formData.professor_password}
-                  onChange={handleInputChange}
-                  placeholder="Enter professor password (min. 6 characters)"
-                  className="w-full px-4 py-3 pr-12 border border-neutral-300 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowProfessorPassword(!showProfessorPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-                  disabled={isLoading}
-                >
-                  {showProfessorPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                  Admin Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showAdminPassword ? "text" : "password"}
+                    name="admin_password"
+                    value={formData.admin_password}
+                    onChange={handleInputChange}
+                    placeholder="Enter admin password (min. 8 characters)"
+                    className="w-full px-4 py-3 pr-12 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                    disabled={isLoading}
+                  >
+                    {showAdminPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
 
             {message && (
-              <div className={`p-3 rounded-lg text-sm ${
+              <div className={`rounded-md border px-4 py-3 text-sm ${
                 message.type === 'success' 
-                  ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' 
-                  : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                  ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300' 
+                  : 'border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300'
               }`}>
                 {message.text}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-yellow-400 hover:bg-yellow-500 disabled:bg-yellow-300 text-black font-medium py-3 px-4 rounded-lg transition-all duration-200 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:shadow-md"
-            >
-              {isLoading ? 'Saving...' : (currentPasswords ? 'Update Passwords' : 'Set Passwords')}
-            </button>
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-md bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Saving…' : (currentPasswords ? 'Update Passwords' : 'Set Passwords')}
+              </button>
+            </div>
           </form>
         )}
       </div>
 
-      {/* Current Status Display */}
       {currentPasswords && !loadingPasswords && (
-        <div className="max-w-md mx-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-neutral-800 dark:text-neutral-200 mb-4">
+        <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60 p-6 bg-white/50 dark:bg-neutral-900/40">
+          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4">
             Password Status
           </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-neutral-600 dark:text-neutral-400">Student Password:</span>
-              <span className="font-medium text-green-600 dark:text-green-400">
-                ✓ Set
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-neutral-600 dark:text-neutral-400">Professor Password:</span>
-              <span className="font-medium text-green-600 dark:text-green-400">
-                ✓ Set
-              </span>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t border-neutral-200 dark:border-neutral-700">
-              <span className="text-neutral-600 dark:text-neutral-400">Last Updated:</span>
-              <span className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
-                {formatDisplayDate(currentPasswords.created_at)}
-              </span>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              { label: 'Student', value: currentPasswords.student_password },
+              { label: 'Professor', value: currentPasswords.professor_password },
+              { label: 'Admin', value: currentPasswords.admin_password }
+            ].map((item) => (
+              <div key={item.label} className="space-y-1">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
+                  {item.label}
+                </p>
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-300">✓ Set</p>
+              </div>
+            ))}
           </div>
-          
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <div className="flex items-start gap-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                <strong>Security Note:</strong> Passwords are stored securely and cannot be viewed once set. 
-                You can only update them with new values.
-              </p>
-            </div>
+          <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 text-sm text-neutral-600 dark:text-neutral-400">
+            Last updated: {formatDisplayDate(currentPasswords.created_at)}
           </div>
         </div>
       )}
