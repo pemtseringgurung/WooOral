@@ -19,6 +19,7 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
   const [loadingProfessors, setLoadingProfessors] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingProfessorId, setDeletingProfessorId] = useState<string | null>(null);
+  const [professorPendingDelete, setProfessorPendingDelete] = useState<Professor | null>(null);
 
   useEffect(() => {
     fetchProfessors();
@@ -44,20 +45,26 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
     }
   };
 
-  const deleteProfessor = async (professorId: string) => {
-    setDeletingProfessorId(professorId);
+  const confirmDeleteProfessor = (professor: Professor) => {
+    setProfessorPendingDelete(professor);
+  };
+
+  const deleteProfessor = async () => {
+    const professor = professorPendingDelete;
+    if (!professor) return;
+    setDeletingProfessorId(professor.id);
     try {
       const supabase = getSupabaseClient();
       const { error } = await supabase
         .from('professors')
         .delete()
-        .eq('id', professorId);
+        .eq('id', professor.id);
 
       if (error) {
         console.error('Error deleting professor:', error);
         setMessage({ type: 'error', text: 'Failed to delete professor. Please try again.' });
       } else {
-        setProfessors(prev => prev.filter(prof => prof.id !== professorId));
+        setProfessors(prev => prev.filter(prof => prof.id !== professor.id));
         setMessage({ type: 'success', text: 'Professor removed successfully!' });
       }
     } catch (error) {
@@ -65,6 +72,7 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
       setMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
     } finally {
       setDeletingProfessorId(null);
+      setProfessorPendingDelete(null);
     }
   };
 
@@ -265,7 +273,7 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
                     </div>
                   </div>
                   <button
-                    onClick={() => deleteProfessor(professor.id)}
+                    onClick={() => confirmDeleteProfessor(professor)}
                     disabled={deletingProfessorId === professor.id}
                     className="text-xs font-medium text-rose-500 hover:text-rose-600 disabled:opacity-50"
                   >
@@ -277,6 +285,36 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
           )}
         </div>
       </div>
+      {professorPendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setProfessorPendingDelete(null)} />
+          <div className="relative z-10 w-full max-w-sm rounded-lg border border-neutral-200/70 dark:border-neutral-800/70 bg-white dark:bg-neutral-950 shadow-xl">
+            <div className="px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
+              <h4 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">Remove professor</h4>
+            </div>
+            <div className="px-5 py-4 space-y-3 text-sm text-neutral-600 dark:text-neutral-300">
+              <p>
+                Remove <span className="font-medium text-neutral-900 dark:text-neutral-100">{professorPendingDelete.name}</span> from the directory?
+              </p>
+              <p>This action cannot be undone.</p>
+            </div>
+            <div className="px-5 py-4 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setProfessorPendingDelete(null)}
+                className="px-4 py-2 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-700 text-neutral-600 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteProfessor}
+                className="px-4 py-2 text-xs font-medium rounded-md bg-rose-500 hover:bg-rose-600 text-white"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

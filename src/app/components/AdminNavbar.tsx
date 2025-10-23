@@ -1,23 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
-import { Calendar, Lock, MapPin, UserPlus, ChevronDown, Clock } from "lucide-react";
+import { Lock, MapPin, UserPlus, ChevronDown, Clock } from "lucide-react";
 
 interface AdminNavbarProps {
   activeSection?: string;
   onSectionChange?: (section: string) => void;
 }
 
-export default function AdminNavbar({ activeSection = "dashboard", onSectionChange }: AdminNavbarProps) {
+export default function AdminNavbar({ activeSection = "defense-period", onSectionChange }: AdminNavbarProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const navItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: <Calendar className="w-4 h-4" />,
-      description: "Overview of all activities"
-    },
     {
       id: "defense-period",
       label: "Set Defense Period",

@@ -12,13 +12,14 @@ export interface Student {
   created_at: string;
 }
 
-export type PersonType = "professor" | "student";
+export type PersonType = "professor" | "student" | "room";
 
 export interface Availability {
   id: string;
   person_id: string;
   person_type: PersonType;
-  day_of_week: string; // 'monday' | 'tuesday' | ...
+  day_of_week?: string; // legacy support
+  slot_date?: string | null; // YYYY-MM-DD
   start_time: string; // HH:MM:SS
   end_time: string;   // HH:MM:SS
   created_at: string;
@@ -56,6 +57,12 @@ export interface Password {
   student_password: string;
   professor_password: string;
   admin_password: string;
+  created_at: string;
+}
+
+export interface Room {
+  id: string;
+  name: string;
   created_at: string;
 }
 
