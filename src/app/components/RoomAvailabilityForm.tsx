@@ -72,11 +72,7 @@ export default function RoomAvailabilityForm() {
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [roomPendingDelete, setRoomPendingDelete] = useState<Room | null>(null);
 
-  useEffect(() => {
-    void loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([fetchRooms(), fetchDefensePeriod(), fetchAvailabilities()]);
@@ -85,7 +81,11 @@ export default function RoomAvailabilityForm() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadInitialData();
+  }, [loadInitialData]);
 
   const fetchRooms = async () => {
     const res = await fetch("/api/admin/rooms", { method: "GET" });

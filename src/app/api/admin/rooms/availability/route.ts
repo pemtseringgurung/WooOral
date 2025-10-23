@@ -3,6 +3,35 @@ import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
 
 const selectColumns = "id, person_id, person_type, slot_date, day_of_week, start_time, end_time, created_at";
 
+type AvailabilityPayload = {
+  id?: string;
+  person_id: string;
+  person_type: "room";
+  slot_date: string;
+  day_of_week?: string | null;
+  start_time: string;
+  end_time: string;
+};
+
+type SlotRequest = {
+  slot_date: string;
+  start_time: string;
+  end_time: string;
+  id?: string;
+  room_id?: string;
+};
+
+type AvailabilityRecord = {
+  id: string;
+  person_id: string;
+  person_type: "room";
+  slot_date: string | null;
+  day_of_week: string | null;
+  start_time: string;
+  end_time: string;
+  created_at: string;
+};
+
 export async function GET() {
   const supabase = getSupabaseAdminClient();
 
@@ -10,8 +39,8 @@ export async function GET() {
     .from("availability")
     .select(selectColumns)
     .eq("person_type", "room")
-    .order("slot_date", { ascending: true, nulls: "first" })
-    .order("day_of_week", { ascending: true, nulls: "last" })
+    .order("slot_date", { ascending: true })
+    .order("day_of_week", { ascending: true })
     .order("start_time");
 
   if (error) {
@@ -31,12 +60,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "room_id or slots array required" }, { status: 400 });
   }
 
-  const records = Array.isArray(slots)
-    ? slots.map((slot: any) => ({
-        person_id: room_id ?? slot.room_id,
-        person_type: "room" as const,
-        slot_date: slot.slot_date ?? slot.date ?? null,
-        day_of_week: slot.day_of_week ?? null,
+  const records: AvailabilityPayload[] = Array.isArray(slots)
+    ? (slots as SlotRequest[]).map((slot) => ({
+        person_id: slot.room_id ?? room_id,
+        person_type: "room",
+        slot_date: slot.slot_date,
+        day_of_week: null,
         start_time: slot.start_time,
         end_time: slot.end_time,
         id: slot.id
@@ -44,8 +73,8 @@ export async function POST(request: Request) {
     : [
         {
           person_id: room_id,
-          person_type: "room" as const,
-          slot_date: slot_date ?? null,
+          person_type: "room",
+          slot_date: slot_date as string,
           day_of_week: day_of_week ?? null,
           start_time,
           end_time,
@@ -60,21 +89,24 @@ export async function POST(request: Request) {
   const toInsert = records.filter((r) => !r.id);
   const toUpdate = records.filter((r) => r.id);
 
-  const results: any[] = [];
+  const results: AvailabilityRecord[] = [];
 
   if (toInsert.length > 0) {
+    const insertPayloads = toInsert.map((record) => {
+      const { id: _ignore, ...rest } = record;
+      return rest;
+    });
+
     const { data, error } = await supabase
       .from("availability")
-      .insert(
-        toInsert.map(({ id: _id, ...rest }) => rest)
-      )
+      .insert(insertPayloads)
       .select(selectColumns);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    results.push(...(data ?? []));
+    results.push(...((data ?? []) as AvailabilityRecord[]));
   }
 
   if (toUpdate.length > 0) {
@@ -92,7 +124,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
 
-      results.push(data);
+      results.push(data as AvailabilityRecord);
     }
   }
 
