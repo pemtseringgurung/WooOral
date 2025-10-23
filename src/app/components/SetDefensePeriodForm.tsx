@@ -48,8 +48,11 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
       return;
     }
 
-    if (new Date(formData.period_end) <= new Date(formData.period_start)) {
-      setMessage({ type: 'error', text: 'End date must be after start date' });
+    const startDate = parseDate(formData.period_start);
+    const endDate = parseDate(formData.period_end);
+
+    if (endDate < startDate) {
+      setMessage({ type: 'error', text: 'End date must be on or after start date' });
       return;
     }
 
@@ -109,13 +112,26 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
     }
   };
 
+  const parseDate = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const formatDisplayDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = parseDate(dateString);
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const calculateDuration = (start: string, end: string) => {
+    const startDate = parseDate(start);
+    const endDate = parseDate(end);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    return Math.round((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
   };
 
   return (
@@ -209,7 +225,7 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
             <div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</p>
               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                {Math.ceil((new Date(currentPeriod.period_end).getTime() - new Date(currentPeriod.period_start).getTime()) / (1000 * 60 * 60 * 24))} days
+                {calculateDuration(currentPeriod.period_start, currentPeriod.period_end)} days
               </p>
             </div>
           </div>

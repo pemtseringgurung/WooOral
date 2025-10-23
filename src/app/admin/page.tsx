@@ -8,10 +8,11 @@ import AddProfessorForm from "@/app/components/AddProfessorForm";
 import SetDefensePeriodForm from "@/app/components/SetDefensePeriodForm";
 import SetPasswordForm from "@/app/components/SetPasswordForm";
 import AdminLoginCard from "@/app/components/AdminLoginCard";
+import RoomAvailabilityForm from "@/app/components/RoomAvailabilityForm";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("defense-period");
 
   const renderContent = () => {
     switch (activeSection) {
@@ -24,14 +25,11 @@ export default function AdminDashboard() {
       case "password":
         return <SetPasswordForm />;
 
+      case "room-availability":
+        return <RoomAvailabilityForm />;
+
       default:
-        return (
-          <div className="text-center py-16">
-            <h3 className="text-2xl font-light text-neutral-600 dark:text-neutral-400 mb-8">
-              Select a section from the navigation above
-            </h3>
-          </div>
-        );
+        return <SetDefensePeriodForm />;
     }
   };
 
