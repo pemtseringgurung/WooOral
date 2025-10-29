@@ -13,15 +13,15 @@ type VideoInfo = {
 const videos: VideoInfo[] = [
   {
     title: "Student walkthrough",
-    url: "https://www.youtube.com/embed/_e7DtcJ1Wkg"
+    url: "https://www.youtube.com/embed/watch"
   },
   {
     title: "Professor walkthrough",
-    url: "https://www.youtube.com/embed/-e5qIyTuEq0"
+    url: "https://www.youtube.com/embed/watch"
   },
   {
     title: "Admin walkthrough",
-    url: "https://www.youtube.com/embed/T8JNP9RSKbA"
+    url: "https://www.youtube.com/embed/watch"
   }
 ];
 
