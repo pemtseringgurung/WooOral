@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import type { Password } from "@/types/index";
+import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
 interface SetPasswordFormProps {
   onPasswordUpdated?: (passwords: Password) => void;
@@ -18,9 +19,57 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [currentPasswords, setCurrentPasswords] = useState<Password | null>(null);
   const [loadingPasswords, setLoadingPasswords] = useState(true);
+  const [masks, setMasks] = useState({ student: "", professor: "", admin: "" });
   const [showStudentPassword, setShowStudentPassword] = useState(false);
   const [showProfessorPassword, setShowProfessorPassword] = useState(false);
   const [showAdminPassword, setShowAdminPassword] = useState(false);
+
+  const toggleShowStudentPassword = () => {
+    const willShow = !showStudentPassword;
+    if (willShow) {
+      // If the field currently contains the mask, replace with the real value
+      if (currentPasswords && formData.student_password === masks.student) {
+        setFormData(prev => ({ ...prev, student_password: currentPasswords.student_password }));
+      }
+      setShowStudentPassword(true);
+    } else {
+      // If the field currently contains the real password, revert to mask
+      if (currentPasswords && formData.student_password === currentPasswords.student_password) {
+        setFormData(prev => ({ ...prev, student_password: masks.student }));
+      }
+      setShowStudentPassword(false);
+    }
+  };
+
+  const toggleShowProfessorPassword = () => {
+    const willShow = !showProfessorPassword;
+    if (willShow) {
+      if (currentPasswords && formData.professor_password === masks.professor) {
+        setFormData(prev => ({ ...prev, professor_password: currentPasswords.professor_password }));
+      }
+      setShowProfessorPassword(true);
+    } else {
+      if (currentPasswords && formData.professor_password === currentPasswords.professor_password) {
+        setFormData(prev => ({ ...prev, professor_password: masks.professor }));
+      }
+      setShowProfessorPassword(false);
+    }
+  };
+
+  const toggleShowAdminPassword = () => {
+    const willShow = !showAdminPassword;
+    if (willShow) {
+      if (currentPasswords && formData.admin_password === masks.admin) {
+        setFormData(prev => ({ ...prev, admin_password: currentPasswords.admin_password }));
+      }
+      setShowAdminPassword(true);
+    } else {
+      if (currentPasswords && formData.admin_password === currentPasswords.admin_password) {
+        setFormData(prev => ({ ...prev, admin_password: masks.admin }));
+      }
+      setShowAdminPassword(false);
+    }
+  };
 
   useEffect(() => {
     fetchPasswords();
@@ -33,10 +82,17 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
 
       if (response.ok && data) {
         setCurrentPasswords(data as Password);
+        const studentLen = (data.student_password || "").length || 6;
+        const professorLen = (data.professor_password || "").length || 6;
+        const adminLen = (data.admin_password || "").length || 8;
+        const studentMask = "•".repeat(studentLen);
+        const professorMask = "•".repeat(professorLen);
+        const adminMask = "•".repeat(adminLen);
+        setMasks({ student: studentMask, professor: professorMask, admin: adminMask });
         setFormData({
-          student_password: "",
-          professor_password: "",
-          admin_password: ""
+          student_password: studentMask,
+          professor_password: professorMask,
+          admin_password: adminMask
         });
       }
     } catch (error) {
@@ -49,32 +105,47 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.student_password || !formData.professor_password || !formData.admin_password) {
+    // Resolve whether the user left the masked values in place. If so,
+    // preserve the existing password from `currentPasswords` instead of
+    // submitting the mask characters.
+    const resolvedStudent = currentPasswords && formData.student_password === masks.student
+      ? currentPasswords.student_password
+      : formData.student_password;
+
+    const resolvedProfessor = currentPasswords && formData.professor_password === masks.professor
+      ? currentPasswords.professor_password
+      : formData.professor_password;
+
+    const resolvedAdmin = currentPasswords && formData.admin_password === masks.admin
+      ? currentPasswords.admin_password
+      : formData.admin_password;
+
+    if (!resolvedStudent || !resolvedProfessor || !resolvedAdmin) {
       setMessage({ type: 'error', text: 'Please enter student, professor, and admin passwords' });
       return;
     }
 
-    if (formData.student_password.length < 6) {
+    if (resolvedStudent.length < 6) {
       setMessage({ type: 'error', text: 'Student password must be at least 6 characters long' });
       return;
     }
 
-    if (formData.professor_password.length < 6) {
+    if (resolvedProfessor.length < 6) {
       setMessage({ type: 'error', text: 'Professor password must be at least 6 characters long' });
       return;
     }
 
-    if (formData.admin_password.length < 8) {
+    if (resolvedAdmin.length < 8) {
       setMessage({ type: 'error', text: 'Admin password must be at least 8 characters long' });
       return;
     }
 
-    if (formData.student_password === formData.professor_password) {
+    if (resolvedStudent === resolvedProfessor) {
       setMessage({ type: 'error', text: 'Student and professor passwords must be different' });
       return;
     }
 
-    if ([formData.student_password, formData.professor_password].includes(formData.admin_password)) {
+    if ([resolvedStudent, resolvedProfessor].includes(resolvedAdmin)) {
       setMessage({ type: 'error', text: 'Admin password must be unique and different from student/professor passwords' });
       return;
     }
@@ -90,9 +161,9 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
         },
         body: JSON.stringify({
           id: currentPasswords?.id,
-          student_password: formData.student_password,
-          professor_password: formData.professor_password,
-          admin_password: formData.admin_password
+          student_password: resolvedStudent,
+          professor_password: resolvedProfessor,
+          admin_password: resolvedAdmin
         })
       });
 
@@ -104,18 +175,16 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
         return;
       }
 
-      setMessage({ 
-        type: 'success', 
-        text: `Passwords ${currentPasswords ? 'updated' : 'set'} successfully!` 
-      });
-      
-      setFormData({
-        student_password: "",
-        professor_password: "",
-        admin_password: ""
-      });
-      
-      setCurrentPasswords(result as Password);
+  setMessage({ type: 'success', text: `Passwords ${currentPasswords ? 'updated' : 'set'} successfully!` });
+
+
+  const saved = result as Password;
+  const studentMask = "•".repeat((saved.student_password || "").length || 6);
+  const professorMask = "•".repeat((saved.professor_password || "").length || 6);
+  const adminMask = "•".repeat((saved.admin_password || "").length || 8);
+  setMasks({ student: studentMask, professor: professorMask, admin: adminMask });
+  setFormData({ student_password: studentMask, professor_password: professorMask, admin_password: adminMask });
+  setCurrentPasswords(saved);
       if (onPasswordUpdated) {
         onPasswordUpdated(result as Password);
       }
@@ -140,14 +209,12 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   };
 
   const formatDisplayDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const d = parseYMDToLocal(dateString as string);
+      return formatDisplayLong(d);
+    } catch {
+      return new Date(dateString).toLocaleDateString('en-US');
+    }
   };
 
   return (
@@ -159,6 +226,9 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
           </h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Configure access passwords for students, professors, and administrators
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 text-center max-w-lg mx-auto">
+            Passwords — Student & Professor: minimum 6 characters; Admin: minimum 8 characters and must be unique.
           </p>
         </div>
 
@@ -185,7 +255,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
                   />
                   <button
                     type="button"
-                    onClick={() => setShowStudentPassword(!showStudentPassword)}
+                    onClick={toggleShowStudentPassword}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                     disabled={isLoading}
                   >
@@ -214,7 +284,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
                   />
                   <button
                     type="button"
-                    onClick={() => setShowProfessorPassword(!showProfessorPassword)}
+                    onClick={toggleShowProfessorPassword}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                     disabled={isLoading}
                   >
@@ -243,7 +313,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
                   />
                   <button
                     type="button"
-                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    onClick={toggleShowAdminPassword}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
                     disabled={isLoading}
                   >
@@ -276,34 +346,16 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
                 {isLoading ? 'Saving…' : (currentPasswords ? 'Update Passwords' : 'Set Passwords')}
               </button>
             </div>
+            {/* Requirements box */}
+            <div className="max-w-md mx-auto mt-4 rounded-md border border-neutral-700/60 bg-white/5 dark:bg-neutral-900/40 px-4 py-3 text-sm text-neutral-400">
+              <ul className="list-disc list-inside space-y-1">
+                <li>Students & Professors: minimum 6 characters</li>
+                <li>Administrators: minimum 8 characters and must be unique</li>
+              </ul>
+            </div>
           </form>
         )}
       </div>
-
-      {currentPasswords && !loadingPasswords && (
-        <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60 p-6 bg-white/50 dark:bg-neutral-900/40">
-          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4">
-            Password Status
-          </h3>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              { label: 'Student', value: currentPasswords.student_password },
-              { label: 'Professor', value: currentPasswords.professor_password },
-              { label: 'Admin', value: currentPasswords.admin_password }
-            ].map((item) => (
-              <div key={item.label} className="space-y-1">
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">
-                  {item.label}
-                </p>
-                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-300">✓ Set</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 text-sm text-neutral-600 dark:text-neutral-400">
-            Last updated: {formatDisplayDate(currentPasswords.created_at)}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

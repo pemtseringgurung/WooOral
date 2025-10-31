@@ -2,10 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { Availability, DefensePeriod, Room } from "@/types/index";
+import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
 const SLOT_START_HOUR = 9;
 const SLOT_END_HOUR = 17; // exclusive for start time (last slot ends at 5pm)
-const SLOT_INTERVAL_MINUTES = 30;
+const SLOT_INTERVAL_MINUTES = 60;
 
 interface RoomFormState {
   name: string;
@@ -172,23 +173,16 @@ export default function RoomAvailabilityForm() {
 
   const dateRange = useMemo(() => {
     if (!defensePeriod) return [] as Array<{ iso: string; label: string }>;
-
-    const start = new Date(defensePeriod.period_start);
-    const end = new Date(defensePeriod.period_end);
+    const start = parseYMDToLocal(defensePeriod.period_start);
+    const end = parseYMDToLocal(defensePeriod.period_end);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
 
-    const formatter = new Intl.DateTimeFormat("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric"
-    });
-
+    const pad = (v: number) => String(v).padStart(2, "0");
     const range: Array<{ iso: string; label: string }> = [];
     const cursor = new Date(start);
     while (cursor <= end) {
-      const iso = cursor.toISOString().slice(0, 10);
-      range.push({ iso, label: formatter.format(cursor) });
+      const iso = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
+      range.push({ iso, label: formatDisplayLong(new Date(cursor)) });
       cursor.setDate(cursor.getDate() + 1);
     }
 
@@ -390,11 +384,7 @@ export default function RoomAvailabilityForm() {
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Add rooms and configure available time slots that align with the official defense window.
         </p>
-        {!defensePeriod && (
-          <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-            Tip: set the defense period first to focus the available days.
-          </p>
-        )}
+  {/* Tip removed per design preference */}
       </header>
 
       {roomMessage && (
@@ -435,7 +425,7 @@ export default function RoomAvailabilityForm() {
             value={roomForm.name}
             onChange={(event) => setRoomForm({ name: event.target.value })}
             placeholder="Example: Taylor 209"
-            className="w-full sm:flex-1 px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+            className="w-full sm:flex-1 px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
             disabled={isSavingRoom}
           />
           <button
@@ -588,8 +578,8 @@ export default function RoomAvailabilityForm() {
             </div>
 
             <div className="px-5 py-4 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                Slots are saved in 30 minute increments from 9:00 AM to 5:00 PM.
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                Slots are saved in 1 hour increments from 9:00 AM to 5:00 PM.
               </span>
               <div className="flex items-center gap-2">
                 <button

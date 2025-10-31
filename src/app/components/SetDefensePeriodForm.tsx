@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import type { DefensePeriod } from "@/types/index";
+import { parseYMDToLocal, formatLocalToYMD, formatDisplayLong, daysBetweenInclusive } from "@/lib/dates";
 
 interface SetDefensePeriodFormProps {
   onPeriodUpdated?: (period: DefensePeriod) => void;
@@ -112,26 +113,15 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
     }
   };
 
-  const parseDate = (value: string) => {
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  };
+  const parseDate = (value: string) => parseYMDToLocal(value);
 
   const formatDisplayDate = (dateString: string) => {
-    const date = parseDate(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const date = parseYMDToLocal(dateString);
+    return formatDisplayLong(date);
   };
 
   const calculateDuration = (start: string, end: string) => {
-    const startDate = parseDate(start);
-    const endDate = parseDate(end);
-    const msPerDay = 1000 * 60 * 60 * 24;
-    return Math.round((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
+    return daysBetweenInclusive(parseYMDToLocal(start), parseYMDToLocal(end));
   };
 
   return (
@@ -152,32 +142,37 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <div className="w-full sm:w-64">
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                   Start Date
                 </label>
-                <input
-                  type="date"
-                  name="period_start"
-                  value={formData.period_start}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-                  disabled={isLoading}
-                />
+                <div className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
+                  <input
+                    type="date"
+                    name="period_start"
+                    value={formData.period_start}
+                    onChange={handleInputChange}
+                    className="w-full bg-transparent text-center text-neutral-900 dark:text-neutral-100 focus:outline-none"
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+
+              <div className="w-full sm:w-64">
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                   End Date
                 </label>
-                <input
-                  type="date"
-                  name="period_end"
-                  value={formData.period_end}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-                  disabled={isLoading}
-                />
+                <div className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 shadow-sm">
+                  <input
+                    type="date"
+                    name="period_end"
+                    value={formData.period_end}
+                    onChange={handleInputChange}
+                    className="w-full bg-transparent text-center text-neutral-900 dark:text-neutral-100 focus:outline-none whitespace-nowrap"
+                    disabled={isLoading}
+                  />
+                </div>
               </div>
             </div>
 
@@ -209,26 +204,32 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
           <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4">
             Current Defense Period
           </h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Start Date</p>
-              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                {formatDisplayDate(currentPeriod.period_start)}
-              </p>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
+                <div className="text-left">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Start Date</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    {formatDisplayDate(currentPeriod.period_start)}
+                  </p>
+                </div>
+
+                <div className="flex justify-center">
+                  <div className="inline-flex flex-col items-center px-3 py-2 rounded-md border border-neutral-200/60 dark:border-neutral-800/40 bg-white/40 dark:bg-neutral-900/30">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</p>
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      {calculateDuration(currentPeriod.period_start, currentPeriod.period_end)} days
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">End Date</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                    {formatDisplayDate(currentPeriod.period_end)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">End Date</p>
-              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                {formatDisplayDate(currentPeriod.period_end)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</p>
-              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                {calculateDuration(currentPeriod.period_start, currentPeriod.period_end)} days
-              </p>
-            </div>
-          </div>
         </div>
       )}
     </div>
