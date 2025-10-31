@@ -434,7 +434,7 @@ export default function RoomAvailabilityForm() {
             type="text"
             value={roomForm.name}
             onChange={(event) => setRoomForm({ name: event.target.value })}
-            placeholder="Example: Mateer 209"
+            placeholder="Example: Taylor 209"
             className="w-full sm:flex-1 px-4 py-3 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-500"
             disabled={isSavingRoom}
           />
