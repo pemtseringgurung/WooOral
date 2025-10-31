@@ -57,5 +57,28 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(response.data);
+  const saved = response.data;
+
+  try {
+    const { error: deleteError } = await supabase
+      .from("availability")
+      .delete()
+      .eq("person_type", "room")
+      .or(`slot_date.lt.${period_start},slot_date.gt.${period_end}`);
+
+    if (deleteError) {
+      return NextResponse.json(
+        { data: saved, warning: `Failed to clean up old availability: ${deleteError.message}` },
+        { status: 200 }
+      );
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { data: saved, warning: `Cleanup threw an error: ${msg}` },
+      { status: 200 }
+    );
+  }
+
+  return NextResponse.json(saved);
 }
