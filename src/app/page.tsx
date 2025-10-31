@@ -21,7 +21,7 @@ const videos: VideoInfo[] = [
   },
   {
     title: "Admin walkthrough",
-    url: "https://www.youtube.com/embed/watch?v=efo3BK4JWtA"
+    url: "https://www.youtube.com/embed/efo3BK4JWtA"
   }
 ];
 
