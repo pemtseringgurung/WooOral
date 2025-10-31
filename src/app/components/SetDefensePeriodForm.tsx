@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import type { DefensePeriod } from "@/types/index";
-import { parseYMDToLocal, formatLocalToYMD, formatDisplayLong, daysBetweenInclusive } from "@/lib/dates";
+import { parseYMDToLocal, formatDisplayLong, daysBetweenInclusive } from "@/lib/dates";
 
 interface SetDefensePeriodFormProps {
   onPeriodUpdated?: (period: DefensePeriod) => void;

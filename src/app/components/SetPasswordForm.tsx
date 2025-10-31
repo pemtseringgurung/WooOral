@@ -208,14 +208,6 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
     }
   };
 
-  const formatDisplayDate = (dateString: string) => {
-    try {
-      const d = parseYMDToLocal(dateString as string);
-      return formatDisplayLong(d);
-    } catch {
-      return new Date(dateString).toLocaleDateString('en-US');
-    }
-  };
 
   return (
     <div className="max-w-xl mx-auto space-y-10">
@@ -226,9 +218,6 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
           </h2>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             Configure access passwords for students, professors, and administrators
-          </p>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 text-center max-w-lg mx-auto">
-            Passwords — Student & Professor: minimum 6 characters; Admin: minimum 8 characters and must be unique.
           </p>
         </div>
 
@@ -350,7 +339,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
             <div className="max-w-md mx-auto mt-4 rounded-md border border-neutral-700/60 bg-white/5 dark:bg-neutral-900/40 px-4 py-3 text-sm text-neutral-400">
               <ul className="list-disc list-inside space-y-1">
                 <li>Students & Professors: minimum 6 characters</li>
-                <li>Administrators: minimum 8 characters and must be unique</li>
+                <li>Administrators: minimum 8 characters</li>
               </ul>
             </div>
           </form>

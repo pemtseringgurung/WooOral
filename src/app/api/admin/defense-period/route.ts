@@ -72,9 +72,10 @@ export async function POST(request: Request) {
         { status: 200 }
       );
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { data: saved, warning: `Cleanup threw an error: ${err?.message ?? String(err)}` },
+      { data: saved, warning: `Cleanup threw an error: ${msg}` },
       { status: 200 }
     );
   }
