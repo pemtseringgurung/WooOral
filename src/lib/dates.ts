@@ -1,7 +1,8 @@
-export function parseYMDToLocal(dateString: string): Date {
-  const [y, m, d] = (dateString || "").split("-").map(Number);
+// Local date helpers to avoid timezone shifts when working with YYYY-MM-DD
+export const parseYMDToLocal = (ymd: string): Date => {
+  const [y, m, d] = (ymd || "").split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
-}
+};
 
 export const formatLocalToYMD = (date: Date): string => {
   const pad = (n: number) => String(n).padStart(2, "0");

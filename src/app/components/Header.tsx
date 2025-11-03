@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export default function Header({ showAdminNav = false, activeSection, onSectionChange }: HeaderProps) {
-  const title = 'I.S. Oral Defense Scheduler';
+  const title = showAdminNav ? 'I.S. Oral Defense Admin' : 'I.S. Oral Defense Scheduler';
 
   return (
     <div>
