@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import cowImage from '../../images/cow.png';
 import AdminNavbar from './AdminNavbar';
 
@@ -35,6 +36,12 @@ export default function Header({ showAdminNav = false, activeSection, onSectionC
                 )}
               </div>
             </div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all"
+            >
+              Home
+            </Link>
           </div>
         </nav>
       </header>

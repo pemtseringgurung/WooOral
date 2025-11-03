@@ -165,7 +165,7 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                 Full Name
               </label>
               <input
@@ -180,7 +180,7 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
             </div>
 
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+              <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                 Email Address
               </label>
               <input

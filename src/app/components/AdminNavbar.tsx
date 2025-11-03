@@ -46,10 +46,8 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
   const activeItem = navItems.find(item => item.id === activeSection);
 
   return (
-    <nav className="bg-white dark:bg-neutral-950 border-b border-neutral-200/50 dark:border-neutral-800/50">
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center h-14">
+    <nav className="bg-neutral-100 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
+        <div className="hidden md:flex justify-center gap-2">
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <button
@@ -70,7 +68,6 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         <div className="md:hidden py-3">
           <div className="relative">
             <button
@@ -100,7 +97,6 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
             )}
           </div>
         </div>
-      </div>
     </nav>
   );
 }

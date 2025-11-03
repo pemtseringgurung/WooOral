@@ -25,7 +25,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Missing professor id" }, { status: 400 });
   }
 
-  // First, delete all availability slots for this professor
   const { error: availabilityError } = await supabase
     .from("availability")
     .delete()
@@ -39,7 +38,6 @@ export async function DELETE(request: Request) {
     );
   }
 
-  // Then delete the professor
   const { error: professorError } = await supabase
     .from("professors")
     .delete()

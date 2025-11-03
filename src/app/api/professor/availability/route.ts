@@ -93,7 +93,6 @@ export async function POST(request: Request) {
 
   if (toInsert.length > 0) {
     const insertPayloads = toInsert.map((record) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id: _ignore, ...rest } = record;
       return rest;
     });

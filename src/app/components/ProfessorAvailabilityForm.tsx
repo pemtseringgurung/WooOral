@@ -174,7 +174,6 @@ export default function ProfessorAvailabilityForm() {
       return;
     }
 
-    // Verify professor still exists
     const professorExists = professors.find(p => p.id === selectedProfessorId);
     if (!professorExists) {
       setMessage({ type: "error", text: "This professor no longer exists. Please refresh the page." });

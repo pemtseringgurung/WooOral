@@ -53,28 +53,38 @@ export default function Home() {
           </h1>
         </div>
 
-        <div className="flex items-start justify-center gap-8 max-w-2xl mx-auto">
-          <div className="space-y-5 flex-1">
-            <h2 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider text-center">
-              Student
-            </h2>
+        <div className="flex items-start justify-center gap-16 max-w-2xl mx-auto">
+          <div className="space-y-6 flex flex-col items-center">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
+                Student
+              </h2>
+              <p className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
+                Portal
+              </p>
+            </div>
             <Link
               href="/student"
-              className="w-full block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-4 rounded-lg transition-all text-sm text-center"
+              className="inline-block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
             >
               Enter
             </Link>
           </div>
           
-          <div className="h-24 w-px bg-neutral-300 dark:bg-neutral-700 hidden md:block" />
+          <div className="h-32 w-px bg-neutral-300 dark:bg-neutral-700 hidden md:block" />
           
-          <div className="space-y-5 flex-1">
-            <h2 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider text-center">
-              Professor
-            </h2>
+          <div className="space-y-6 flex flex-col items-center">
+            <div className="text-center space-y-2">
+              <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
+                Professor
+              </h2>
+              <p className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
+                Portal
+              </p>
+            </div>
             <Link
               href="/professor"
-              className="w-full block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-4 rounded-lg transition-all text-sm text-center"
+              className="inline-block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
             >
               Enter
             </Link>
@@ -95,20 +105,19 @@ export default function Home() {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowHelp(false)} />
           <div className="relative z-10 w-full max-w-4xl rounded-lg border border-neutral-200/70 dark:border-neutral-800/70 bg-white dark:bg-neutral-950 shadow-xl">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div>
+            <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+              <div className="text-center">
                 <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">How it works</h2>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">Quick video walkthroughs for each role</p>
               </div>
               <button
                 onClick={() => setShowHelp(false)}
-                className="text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                className="absolute top-4 right-6 text-sm text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
               >
                 Close
               </button>
             </div>
             <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
-              {/* Top row: Student & Professor side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {videos.slice(0, 2).map((video) => (
                   <div key={video.title} className="space-y-2">
@@ -127,7 +136,6 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {/* Bottom row: Admin centered */}
               {videos[2] && (
                 <div className="mt-6 flex justify-center">
                   <div className="w-full md:w-3/4 lg:w-1/2 space-y-2">

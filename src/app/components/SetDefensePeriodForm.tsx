@@ -141,7 +141,7 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
             <p className="text-neutral-500 dark:text-neutral-400">Loading current period...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <div className="w-full sm:w-64">
                 <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
@@ -201,7 +201,7 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
 
       {currentPeriod && !loadingPeriod && (
         <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60 p-6 bg-white/50 dark:bg-neutral-900/40">
-          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide mb-4 text-center">
             Current Defense Period
           </h3>
             <div className="grid gap-3">
@@ -214,7 +214,7 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
                 </div>
 
                 <div className="flex justify-center">
-                  <div className="inline-flex flex-col items-center px-3 py-2 rounded-md border border-neutral-200/60 dark:border-neutral-800/40 bg-white/40 dark:bg-neutral-900/30">
+                  <div className="inline-flex flex-col items-center px-4 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-sm">
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</p>
                     <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                       {calculateDuration(currentPeriod.period_start, currentPeriod.period_end)} days

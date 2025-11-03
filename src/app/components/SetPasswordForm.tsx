@@ -27,13 +27,11 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const toggleShowStudentPassword = () => {
     const willShow = !showStudentPassword;
     if (willShow) {
-      // If the field currently contains the mask, replace with the real value
       if (currentPasswords && formData.student_password === masks.student) {
         setFormData(prev => ({ ...prev, student_password: currentPasswords.student_password }));
       }
       setShowStudentPassword(true);
     } else {
-      // If the field currently contains the real password, revert to mask
       if (currentPasswords && formData.student_password === currentPasswords.student_password) {
         setFormData(prev => ({ ...prev, student_password: masks.student }));
       }
@@ -105,9 +103,6 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Resolve whether the user left the masked values in place. If so,
-    // preserve the existing password from `currentPasswords` instead of
-    // submitting the mask characters.
     const resolvedStudent = currentPasswords && formData.student_password === masks.student
       ? currentPasswords.student_password
       : formData.student_password;
@@ -210,7 +205,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
 
 
   return (
-    <div className="max-w-xl mx-auto space-y-10">
+    <div className="max-w-xl mx-auto space-y-6">
       <div className="space-y-4">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
@@ -226,10 +221,17 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
             <p className="text-neutral-500 dark:text-neutral-400">Loading current passwords...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="max-w-md mx-auto rounded-md border border-neutral-700/60 bg-white/5 dark:bg-neutral-900/40 px-4 py-3 text-sm text-neutral-400">
+              <ul className="list-disc list-inside space-y-1">
+                <li>Students & Professors: minimum 6 characters</li>
+                <li>Administrators: minimum 8 characters</li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                   Student Password
                 </label>
                 <div className="relative">
@@ -258,7 +260,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                   Professor Password
                 </label>
                 <div className="relative">
@@ -287,7 +289,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
               </div>
 
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2">
+                <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-2 text-center">
                   Admin Password
                 </label>
                 <div className="relative">
@@ -334,13 +336,6 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
               >
                 {isLoading ? 'Saving…' : (currentPasswords ? 'Update Passwords' : 'Set Passwords')}
               </button>
-            </div>
-            {/* Requirements box */}
-            <div className="max-w-md mx-auto mt-4 rounded-md border border-neutral-700/60 bg-white/5 dark:bg-neutral-900/40 px-4 py-3 text-sm text-neutral-400">
-              <ul className="list-disc list-inside space-y-1">
-                <li>Students & Professors: minimum 6 characters</li>
-                <li>Administrators: minimum 8 characters</li>
-              </ul>
             </div>
           </form>
         )}
