@@ -60,30 +60,15 @@ export async function POST(request: Request) {
   const saved = response.data;
 
   try {
-    // Delete room availability outside the new period
-    const { error: deleteRoomError } = await supabase
+    const { error: deleteError } = await supabase
       .from("availability")
       .delete()
       .eq("person_type", "room")
       .or(`slot_date.lt.${period_start},slot_date.gt.${period_end}`);
 
-    if (deleteRoomError) {
+    if (deleteError) {
       return NextResponse.json(
-        { data: saved, warning: `Failed to clean up old room availability: ${deleteRoomError.message}` },
-        { status: 200 }
-      );
-    }
-
-    // Delete professor availability outside the new period
-    const { error: deleteProfError } = await supabase
-      .from("availability")
-      .delete()
-      .eq("person_type", "professor")
-      .or(`slot_date.lt.${period_start},slot_date.gt.${period_end}`);
-
-    if (deleteProfError) {
-      return NextResponse.json(
-        { data: saved, warning: `Failed to clean up old professor availability: ${deleteProfError.message}` },
+        { data: saved, warning: `Failed to clean up old availability: ${deleteError.message}` },
         { status: 200 }
       );
     }
