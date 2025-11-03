@@ -12,6 +12,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'IS Oral Defense Application',
   description: 'Application for managing IS Oral Defense presentations',
+  icons: {
+    icon: '/cow.png',
+  },
 };
 
 export default function RootLayout({
