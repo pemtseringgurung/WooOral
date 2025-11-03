@@ -32,7 +32,7 @@ export default function Home() {
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center px-4 relative">
       <Link 
         href="/admin"
-        className="absolute top-6 right-6 text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors underline decoration-neutral-300 dark:decoration-neutral-700 hover:decoration-neutral-900 dark:hover:decoration-neutral-100 underline-offset-4"
+        className="absolute top-6 right-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-neutral-300/70 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/70 text-sm font-medium text-neutral-700 dark:text-neutral-100 shadow-sm hover:shadow-md hover:border-neutral-400 dark:hover:border-neutral-600 transition-all"
       >
         Admin Portal
       </Link>
@@ -85,23 +85,45 @@ export default function Home() {
                 Close
               </button>
             </div>
-            <div className="px-6 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
-              {videos.map((video) => (
-                <div key={video.title} className="space-y-2">
-                  <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200 uppercase tracking-wide">
-                    {video.title}
-                  </h3>
-                  <div className="relative w-full overflow-hidden rounded-lg aspect-video bg-black/80">
-                    <iframe
-                      src={video.url}
-                      title={video.title}
-                      className="absolute inset-0 w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+            <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
+              {/* Top row: Student & Professor side by side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {videos.slice(0, 2).map((video) => (
+                  <div key={video.title} className="space-y-2">
+                    <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200 uppercase tracking-wide text-center">
+                      {video.title}
+                    </h3>
+                    <div className="relative w-full overflow-hidden rounded-lg aspect-video bg-black/80">
+                      <iframe
+                        src={video.url}
+                        title={video.title}
+                        className="absolute inset-0 w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Bottom row: Admin centered */}
+              {videos[2] && (
+                <div className="mt-6 flex justify-center">
+                  <div className="w-full md:w-3/4 lg:w-1/2 space-y-2">
+                    <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200 uppercase tracking-wide text-center">
+                      {videos[2].title}
+                    </h3>
+                    <div className="relative w-full overflow-hidden rounded-lg aspect-video bg-black/80">
+                      <iframe
+                        src={videos[2].url}
+                        title={videos[2].title}
+                        className="absolute inset-0 w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -206,9 +206,9 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
           </h3>
             <div className="grid gap-3">
               <div className="grid grid-cols-1 sm:grid-cols-3 items-center gap-4">
-                <div className="text-left">
+                <div className="text-left min-w-0 max-w-[140px]">
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Start Date</p>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 break-words whitespace-normal">
                     {formatDisplayDate(currentPeriod.period_start)}
                   </p>
                 </div>
@@ -222,9 +222,9 @@ export default function SetDefensePeriodForm({ onPeriodUpdated }: SetDefensePeri
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-right min-w-0 max-w-[140px] ml-auto">
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">End Date</p>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 whitespace-nowrap">
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 break-words whitespace-normal">
                     {formatDisplayDate(currentPeriod.period_end)}
                   </p>
                 </div>
