@@ -62,7 +62,7 @@ export default function ProfessorPortal() {
               />
               <div className="flex flex-col">
                 <h1 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  I.S. Oral Defense Professor
+                  I.S. Oral Defense Scheduler
                 </h1>
                 <span className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                   Professor Portal
