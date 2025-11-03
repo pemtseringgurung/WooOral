@@ -53,23 +53,24 @@ export default function AddProfessorForm({ onProfessorAdded }: AddProfessorFormP
     const professor = professorPendingDelete;
     if (!professor) return;
     setDeletingProfessorId(professor.id);
+    setMessage(null);
+    
     try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from('professors')
-        .delete()
-        .eq('id', professor.id);
-
-      if (error) {
-        console.error('Error deleting professor:', error);
-        setMessage({ type: 'error', text: 'Failed to delete professor. Please try again.' });
-      } else {
-        setProfessors(prev => prev.filter(prof => prof.id !== professor.id));
-        setMessage({ type: 'success', text: 'Professor removed successfully!' });
+      const res = await fetch(`/api/admin/professors?id=${professor.id}`, { 
+        method: 'DELETE' 
+      });
+      
+      const data = res.ok ? null : await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data?.error ?? 'Failed to delete professor');
       }
+
+      setProfessors(prev => prev.filter(prof => prof.id !== professor.id));
+      setMessage({ type: 'success', text: `${professor.name} removed successfully!` });
     } catch (error) {
-      console.error('Unexpected error deleting professor:', error);
-      setMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
+      console.error('Failed to delete professor:', error);
+      setMessage({ type: 'error', text: (error as Error).message || 'Failed to delete professor' });
     } finally {
       setDeletingProfessorId(null);
       setProfessorPendingDelete(null);

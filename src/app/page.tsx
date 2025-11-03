@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import PasswordLoginCard from "@/app/components/PasswordLoginCard";
 
 type VideoInfo = {
   title: string;
@@ -54,9 +53,32 @@ export default function Home() {
           </h1>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-lg mx-auto">
-          <PasswordLoginCard type="student" />
-          <PasswordLoginCard type="professor" />
+        <div className="flex items-start justify-center gap-8 max-w-2xl mx-auto">
+          <div className="space-y-5 flex-1">
+            <h2 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider text-center">
+              Student
+            </h2>
+            <Link
+              href="/student"
+              className="w-full block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-4 rounded-lg transition-all text-sm text-center"
+            >
+              Enter
+            </Link>
+          </div>
+          
+          <div className="h-24 w-px bg-neutral-300 dark:bg-neutral-700 hidden md:block" />
+          
+          <div className="space-y-5 flex-1">
+            <h2 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider text-center">
+              Professor
+            </h2>
+            <Link
+              href="/professor"
+              className="w-full block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-4 rounded-lg transition-all text-sm text-center"
+            >
+              Enter
+            </Link>
+          </div>
         </div>
 
         <div className="flex justify-center mt-10">
