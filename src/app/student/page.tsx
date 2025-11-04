@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Header from "@/app/components/Header";
 import PasswordLoginCard from "@/app/components/PasswordLoginCard";
 
 export default function StudentPortal() {
@@ -48,30 +49,8 @@ export default function StudentPortal() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-              Student Dashboard
-            </h1>
-            <Link
-              href="/"
-              className="text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
-            >
-              Logout
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header portalType="student" />
       <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-800 p-6">
-          <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 mb-4">
-            Welcome, Student!
-          </h2>
-          <p className="text-neutral-600 dark:text-neutral-400">
-            Your student portal dashboard will be displayed here.
-          </p>
-        </div>
       </main>
     </div>
   );

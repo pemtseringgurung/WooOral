@@ -54,18 +54,13 @@ export default function Home() {
         </div>
 
         <div className="flex items-start justify-center gap-16 max-w-2xl mx-auto">
-          <div className="space-y-6 flex flex-col items-center">
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
-                Student
-              </h2>
-              <p className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
-                Portal
-              </p>
-            </div>
+          <div className="space-y-6 flex flex-col items-center min-w-[140px]">
+            <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 text-center">
+              Student Portal
+            </h2>
             <Link
               href="/student"
-              className="inline-block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
+              className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
             >
               Enter
             </Link>
@@ -73,18 +68,13 @@ export default function Home() {
           
           <div className="h-32 w-px bg-neutral-300 dark:bg-neutral-700 hidden md:block" />
           
-          <div className="space-y-6 flex flex-col items-center">
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
-                Professor
-              </h2>
-              <p className="text-xl font-medium text-neutral-900 dark:text-neutral-100">
-                Portal
-              </p>
-            </div>
+          <div className="space-y-6 flex flex-col items-center min-w-[140px]">
+            <h2 className="text-xl font-medium text-neutral-900 dark:text-neutral-100 text-center">
+              Professor Portal
+            </h2>
             <Link
               href="/professor"
-              className="inline-block bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
+              className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-100 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 font-medium py-3 px-8 rounded-lg transition-all text-sm text-center"
             >
               Enter
             </Link>
@@ -118,6 +108,7 @@ export default function Home() {
               </button>
             </div>
             <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
+              {/* Top row: Student & Professor side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {videos.slice(0, 2).map((video) => (
                   <div key={video.title} className="space-y-2">
@@ -136,6 +127,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+              {/* Bottom row: Admin centered */}
               {videos[2] && (
                 <div className="mt-6 flex justify-center">
                   <div className="w-full md:w-3/4 lg:w-1/2 space-y-2">

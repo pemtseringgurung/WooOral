@@ -7,11 +7,10 @@ interface HeaderProps {
   showAdminNav?: boolean;
   activeSection?: string;
   onSectionChange?: (section: string) => void;
+  portalType?: 'admin' | 'professor' | 'student';
 }
 
-export default function Header({ showAdminNav = false, activeSection, onSectionChange }: HeaderProps) {
-  const title = showAdminNav ? 'I.S. Oral Defense Admin' : 'I.S. Oral Defense Scheduler';
-
+export default function Header({ showAdminNav = false, activeSection, onSectionChange, portalType }: HeaderProps) {
   return (
     <div>
       <header className="w-full bg-white/80 dark:bg-neutral-950/80 backdrop-blur border-b border-slate-200 dark:border-neutral-800">
@@ -27,11 +26,13 @@ export default function Header({ showAdminNav = false, activeSection, onSectionC
               />
               <div className="flex flex-col">
                 <h1 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {title}
+                  I.S. Oral Defense Scheduler
                 </h1>
-                {showAdminNav && (
+                {portalType && (
                   <span className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                    Admin Portal
+                    {portalType === 'admin' && 'Admin Portal'}
+                    {portalType === 'professor' && 'Professor Portal'}
+                    {portalType === 'student' && 'Student Portal'}
                   </span>
                 )}
               </div>

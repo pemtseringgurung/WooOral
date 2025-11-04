@@ -28,6 +28,7 @@ export default function PasswordLoginCard({ type, onSuccess }: PasswordLoginCard
       if (onSuccess) {
         onSuccess();
       }
+      // TODO: Redirect to appropriate dashboard
       return true;
     } catch (error) {
       console.error(`${type} login failed`, error);
