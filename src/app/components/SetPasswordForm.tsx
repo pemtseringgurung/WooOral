@@ -27,11 +27,13 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const toggleShowStudentPassword = () => {
     const willShow = !showStudentPassword;
     if (willShow) {
+      // If the field currently contains the mask, replace with the real value
       if (currentPasswords && formData.student_password === masks.student) {
         setFormData(prev => ({ ...prev, student_password: currentPasswords.student_password }));
       }
       setShowStudentPassword(true);
     } else {
+      // If the field currently contains the real password, revert to mask
       if (currentPasswords && formData.student_password === currentPasswords.student_password) {
         setFormData(prev => ({ ...prev, student_password: masks.student }));
       }
@@ -103,6 +105,9 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Resolve whether the user left the masked values in place. If so,
+    // preserve the existing password from `currentPasswords` instead of
+    // submitting the mask characters.
     const resolvedStudent = currentPasswords && formData.student_password === masks.student
       ? currentPasswords.student_password
       : formData.student_password;
