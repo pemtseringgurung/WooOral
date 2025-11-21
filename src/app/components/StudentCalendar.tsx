@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { format, parseISO, addDays, isSameDay, startOfDay, isToday } from "date-fns";
+import { format, parseISO, addDays, isSameDay } from "date-fns";
 import { Calendar as CalendarIcon, AlertCircle } from "lucide-react";
 
 // Types
@@ -53,8 +53,9 @@ export default function StudentCalendar() {
                 const json = await res.json();
                 if (json.error) throw new Error(json.error);
                 setData(json);
-            } catch (err: any) {
-                setError(err.message);
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

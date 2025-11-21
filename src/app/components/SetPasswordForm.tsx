@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import type { Password } from "@/types/index";
-import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
 interface SetPasswordFormProps {
   onPasswordUpdated?: (passwords: Password) => void;
@@ -104,7 +103,7 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Resolve whether the user left the masked values in place. If so,
     // preserve the existing password from `currentPasswords` instead of
     // submitting the mask characters.
@@ -175,16 +174,16 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
         return;
       }
 
-  setMessage({ type: 'success', text: `Passwords ${currentPasswords ? 'updated' : 'set'} successfully!` });
+      setMessage({ type: 'success', text: `Passwords ${currentPasswords ? 'updated' : 'set'} successfully!` });
 
 
-  const saved = result as Password;
-  const studentMask = "•".repeat((saved.student_password || "").length || 6);
-  const professorMask = "•".repeat((saved.professor_password || "").length || 6);
-  const adminMask = "•".repeat((saved.admin_password || "").length || 8);
-  setMasks({ student: studentMask, professor: professorMask, admin: adminMask });
-  setFormData({ student_password: studentMask, professor_password: professorMask, admin_password: adminMask });
-  setCurrentPasswords(saved);
+      const saved = result as Password;
+      const studentMask = "•".repeat((saved.student_password || "").length || 6);
+      const professorMask = "•".repeat((saved.professor_password || "").length || 6);
+      const adminMask = "•".repeat((saved.admin_password || "").length || 8);
+      setMasks({ student: studentMask, professor: professorMask, admin: adminMask });
+      setFormData({ student_password: studentMask, professor_password: professorMask, admin_password: adminMask });
+      setCurrentPasswords(saved);
       if (onPasswordUpdated) {
         onPasswordUpdated(result as Password);
       }
@@ -324,11 +323,10 @@ export default function SetPasswordForm({ onPasswordUpdated }: SetPasswordFormPr
             </div>
 
             {message && (
-              <div className={`rounded-md border px-4 py-3 text-sm ${
-                message.type === 'success' 
-                  ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300' 
+              <div className={`rounded-md border px-4 py-3 text-sm ${message.type === 'success'
+                  ? 'border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300'
                   : 'border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300'
-              }`}>
+                }`}>
                 {message.text}
               </div>
             )}
