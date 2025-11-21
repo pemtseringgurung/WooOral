@@ -5,7 +5,7 @@ import type { Availability, DefensePeriod, Room } from "@/types/index";
 import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
 const SLOT_START_HOUR = 9;
-const SLOT_END_HOUR = 17;
+const SLOT_END_HOUR = 17; // exclusive for start time (last slot ends at 5pm)
 const SLOT_INTERVAL_MINUTES = 60;
 
 interface RoomFormState {
@@ -32,7 +32,7 @@ const groupSlotsForRoom = (roomId: string, slots: Availability[]): SlotsByDate =
   for (const slot of slots) {
     if (slot.person_type !== "room" || slot.person_id !== roomId) continue;
     const key = slot.slot_date ?? null;
-    if (!key) continue;
+    if (!key) continue; // skip legacy rows without slot_date
     if (!grouped[key]) {
       grouped[key] = [];
     }
@@ -384,7 +384,7 @@ export default function RoomAvailabilityForm() {
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Add rooms and configure available time slots that align with the official defense window.
         </p>
-
+  {/* Tip removed per design preference */}
       </header>
 
       {roomMessage && (
