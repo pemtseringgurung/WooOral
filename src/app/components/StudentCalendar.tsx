@@ -35,6 +35,14 @@ const TIME_SLOTS = [
     "13:00:00", "14:00:00", "15:00:00", "16:00:00", "17:00:00"
 ];
 
+const formatTime = (t: string) => {
+    const [h, m] = t.split(":");
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${m} ${ampm}`;
+};
+
 export default function StudentCalendar() {
     // State
     const [loading, setLoading] = useState(true);
@@ -43,6 +51,7 @@ export default function StudentCalendar() {
 
     // Selection State
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
     // Fetch Data
     useEffect(() => {
@@ -142,11 +151,11 @@ export default function StudentCalendar() {
 
     // Main Calendar UI
     return (
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto space-y-8">
+
             <div className="bg-white dark:bg-neutral-900 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <CalendarIcon className="w-6 h-6 text-neutral-500" />
+                    <h2 className="text-xl font-semibold">
                         Select a Date
                     </h2>
                     <span className="text-sm font-medium px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
@@ -182,7 +191,10 @@ export default function StudentCalendar() {
                                 <button
                                     key={dateStr}
                                     disabled={!hasSlots}
-                                    onClick={() => setSelectedDate(dateClone)}
+                                    onClick={() => {
+                                        setSelectedDate(dateClone);
+                                        setSelectedTime(null);
+                                    }}
                                     className={`
                     aspect-square rounded-xl flex flex-col items-center justify-center text-base transition-all relative group
                     ${isSelected
@@ -220,6 +232,36 @@ export default function StudentCalendar() {
                     </div>
                 </div>
             </div>
+
+
+            {selectedDate && (
+                <div className="bg-white dark:bg-neutral-900 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800">
+                    <h2 className="text-xl font-semibold mb-6">
+                        Select a Time
+                    </h2>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                        {Object.keys(availableSlots[format(selectedDate, "yyyy-MM-dd")] || {}).sort().map(time => (
+                            <button
+                                key={time}
+                                onClick={() => setSelectedTime(time)}
+                                className={`
+                  px-4 py-3 rounded-xl text-sm font-medium border
+                  ${selectedTime === time
+                                        ? "bg-neutral-900 border-neutral-900 text-white dark:bg-white dark:border-white dark:text-black"
+                                        : "bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700"}
+                `}
+                            >
+                                {formatTime(time)}
+                            </button>
+                        ))}
+                        {Object.keys(availableSlots[format(selectedDate, "yyyy-MM-dd")] || {}).length === 0 && (
+                            <div className="col-span-full text-center py-8 text-neutral-400 text-sm">
+                                No available times for this date.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
