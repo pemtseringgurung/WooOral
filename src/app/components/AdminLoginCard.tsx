@@ -37,6 +37,7 @@ export default function AdminLoginCard({ onSuccess }: AdminLoginCardProps) {
       title="Administrator"
       placeholder="Password"
       onSubmit={handleSubmit}
+      autoFocus={true}
     />
   );
 }
