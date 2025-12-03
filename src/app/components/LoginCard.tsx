@@ -8,13 +8,15 @@ interface LoginCardProps {
   placeholder?: string;
   onSubmit: (password: string) => Promise<boolean>;
   focusRingColor?: string;
+  autoFocus?: boolean;
 }
 
-export default function LoginCard({ 
-  title, 
-  placeholder = "Enter password", 
+export default function LoginCard({
+  title,
+  placeholder = "Enter password",
   onSubmit,
-  focusRingColor = "focus:ring-neutral-500 focus:border-neutral-500"
+  focusRingColor = "focus:ring-neutral-500 focus:border-neutral-500",
+  autoFocus = false
 }: LoginCardProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +59,7 @@ export default function LoginCard({
             className={`w-full px-4 py-3 pr-11 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:ring-2 ${focusRingColor} transition-all text-sm`}
             disabled={isLoading}
             required
+            autoFocus={autoFocus}
           />
           <button
             type="button"
