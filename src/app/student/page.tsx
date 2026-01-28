@@ -51,11 +51,11 @@ export default function StudentPortal() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <Header portalType="student" />
-      <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Schedule Your Defense</h1>
           <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-            Select a date and time to see available rooms and committee members.
+            Select a date to see available times and book your defense.
           </p>
         </div>
         <StudentCalendar />
