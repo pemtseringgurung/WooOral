@@ -55,7 +55,7 @@ export default function StudentPortal() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Schedule Your Defense</h1>
           <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-            Select a date to see available times and book your defense.
+            First select your readers, then choose an available date and time to book your defense.
           </p>
         </div>
         <StudentCalendar />

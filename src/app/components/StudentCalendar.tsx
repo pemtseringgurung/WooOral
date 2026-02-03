@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { format, parseISO, addDays, isSameDay } from "date-fns";
-import { Calendar as CalendarIcon, AlertCircle, X, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { format, parseISO, addDays } from "date-fns";
+import { Calendar as CalendarIcon, AlertCircle, X, ChevronRight, ChevronLeft, Check, ChevronDown } from "lucide-react";
 
 // Types
 type Period = { period_start: string; period_end: string };
@@ -29,7 +29,7 @@ type InitialData = {
     defenses: Defense[];
 };
 
-type SlotData = { rooms: Room[]; professors: Professor[] };
+type SlotData = { rooms: Room[] };
 
 // Helper: Generate Time Slots (9am - 5pm)
 const TIME_SLOTS = [
@@ -51,17 +51,24 @@ export default function StudentCalendar() {
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<InitialData | null>(null);
 
+    // Reader Selection Phase (before calendar)
+    const [readersSelected, setReadersSelected] = useState(false);
+    const [firstReader, setFirstReader] = useState<string | null>(null);
+    const [secondaryReader, setSecondaryReader] = useState<string | null>(null);
+
     // Modal State
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [step, setStep] = useState(1); // 1: Time, 2: Professors, 3: Room, 4: Student Info, 5: Confirm
+    const [step, setStep] = useState(1); // 1: Time, 2: Room, 3: Student Info, 4: Confirm
 
     // Booking Selections
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [selectedProfessors, setSelectedProfessors] = useState<string[]>([]);
     const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
     const [studentName, setStudentName] = useState("");
     const [studentEmail, setStudentEmail] = useState("");
+
+    const [bookingError, setBookingError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Fetch Data
     useEffect(() => {
@@ -82,11 +89,16 @@ export default function StudentCalendar() {
         fetchData();
     }, []);
 
-    // Logic: Calculate Available Slots
+    // Get professor objects for selected readers
+    const firstReaderProf = data?.professors.find(p => p.id === firstReader);
+    const secondaryReaderProf = data?.professors.find(p => p.id === secondaryReader);
+
+    // Logic: Calculate Available Slots (filtered by selected readers)
     const availableSlots = useMemo(() => {
-        if (!data || !data.period) return {};
+        if (!data || !data.period || !firstReader || !secondaryReader) return {};
 
         const slots: Record<string, Record<string, SlotData>> = {};
+        const selectedProfIds = [firstReader, secondaryReader];
 
         const isBooked = (type: "room" | "professor", id: string, date: string, time: string) => {
             return data.defenses.some(d =>
@@ -96,6 +108,8 @@ export default function StudentCalendar() {
             );
         };
 
+        const normalizeTime = (t: string) => t.length === 5 ? `${t}:00` : t;
+
         let curr = parseISO(data.period.period_start);
         const end = parseISO(data.period.period_end);
 
@@ -104,8 +118,20 @@ export default function StudentCalendar() {
             slots[dateStr] = {};
 
             for (const time of TIME_SLOTS) {
-                const normalizeTime = (t: string) => t.length === 5 ? `${t}:00` : t;
+                // Check if BOTH selected professors are available at this time
+                const bothProfsAvailable = selectedProfIds.every(profId => {
+                    const hasAvail = data.availability.some(a =>
+                        a.person_type === "professor" &&
+                        a.person_id === profId &&
+                        a.slot_date === dateStr &&
+                        normalizeTime(a.start_time) === time
+                    );
+                    return hasAvail && !isBooked("professor", profId, dateStr, time);
+                });
 
+                if (!bothProfsAvailable) continue;
+
+                // Check for available rooms
                 const freeRooms = data.rooms.filter(room => {
                     const hasAvail = data.availability.some(a =>
                         a.person_type === "room" &&
@@ -116,31 +142,20 @@ export default function StudentCalendar() {
                     return hasAvail && !isBooked("room", room.id, dateStr, time);
                 });
 
-                const freeProfs = data.professors.filter(prof => {
-                    const hasAvail = data.availability.some(a =>
-                        a.person_type === "professor" &&
-                        a.person_id === prof.id &&
-                        a.slot_date === dateStr &&
-                        normalizeTime(a.start_time) === time
-                    );
-                    return hasAvail && !isBooked("professor", prof.id, dateStr, time);
-                });
-
-                if (freeRooms.length >= 1 && freeProfs.length >= 2) {
-                    slots[dateStr][time] = { rooms: freeRooms, professors: freeProfs };
+                if (freeRooms.length >= 1) {
+                    slots[dateStr][time] = { rooms: freeRooms };
                 }
             }
             curr = addDays(curr, 1);
         }
 
         return slots;
-    }, [data]);
+    }, [data, firstReader, secondaryReader]);
 
     // Modal Helpers
     const openModal = (date: Date) => {
         setSelectedDate(date);
         setSelectedTime(null);
-        setSelectedProfessors([]);
         setSelectedRoom(null);
         setStudentName("");
         setStudentEmail("");
@@ -157,26 +172,14 @@ export default function StudentCalendar() {
     const slotsForDate = availableSlots[dateStr] || {};
     const currentSlot = selectedTime ? slotsForDate[selectedTime] : null;
 
-    const toggleProfessor = (id: string) => {
-        setSelectedProfessors(prev => {
-            if (prev.includes(id)) return prev.filter(p => p !== id);
-            if (prev.length < 2) return [...prev, id];
-            return prev;
-        });
-    };
-
     const canProceed = () => {
         switch (step) {
             case 1: return !!selectedTime;
-            case 2: return selectedProfessors.length === 2;
-            case 3: return !!selectedRoom;
-            case 4: return studentName.trim().length > 0 && studentEmail.trim().length > 0 && studentEmail.includes("@");
+            case 2: return !!selectedRoom;
+            case 3: return studentName.trim().length > 0 && studentEmail.trim().length > 0 && studentEmail.includes("@");
             default: return false;
         }
     };
-
-    const [bookingError, setBookingError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleConfirm = async () => {
         setBookingError(null);
@@ -190,7 +193,7 @@ export default function StudentCalendar() {
                     studentName,
                     studentEmail,
                     roomId: selectedRoom,
-                    professorIds: selectedProfessors,
+                    professorIds: [firstReader, secondaryReader],
                     date: dateStr,
                     time: selectedTime
                 })
@@ -204,7 +207,6 @@ export default function StudentCalendar() {
 
             // Success - close modal and refresh data
             closeModal();
-            // Refresh availability data
             const refreshRes = await fetch("/api/student/initial-data");
             if (refreshRes.ok) {
                 const refreshData = await refreshRes.json();
@@ -216,6 +218,12 @@ export default function StudentCalendar() {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleChangeReaders = () => {
+        setReadersSelected(false);
+        setFirstReader(null);
+        setSecondaryReader(null);
     };
 
     // Render Helpers
@@ -241,11 +249,128 @@ export default function StudentCalendar() {
         </div>
     );
 
-    // Main Calendar UI
+    // Reader Selection UI (shown first)
+    if (!readersSelected) {
+        const canConfirmReaders = firstReader && secondaryReader && firstReader !== secondaryReader;
+
+        return (
+            <div className="w-full max-w-lg mx-auto">
+                <div className="bg-white dark:bg-neutral-900 p-8 sm:p-10 rounded-2xl shadow-lg border border-neutral-200 dark:border-neutral-800">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                            Select Your Readers
+                        </h2>
+                        <p className="text-neutral-500 mt-2 text-base">
+                            Choose your readers to view available defense times
+                        </p>
+                    </div>
+
+                    <div className="space-y-5">
+                        {/* First Reader Dropdown */}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wide">
+                                First Reader
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={firstReader || ""}
+                                    onChange={(e) => setFirstReader(e.target.value || null)}
+                                    className={`w-full px-4 py-4 rounded-xl border-2 bg-white dark:bg-neutral-800 text-base focus:outline-none transition-all cursor-pointer appearance-none pr-12 ${firstReader
+                                        ? "border-neutral-400 dark:border-neutral-500 text-neutral-900 dark:text-neutral-100"
+                                        : "border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400"
+                                        } hover:border-neutral-400 dark:hover:border-neutral-500 focus:border-neutral-500 dark:focus:border-neutral-400`}
+                                >
+                                    <option value="">Select your First Reader</option>
+                                    {data.professors
+                                        .filter(prof => prof.id !== secondaryReader)
+                                        .map(prof => (
+                                            <option key={`first-${prof.id}`} value={prof.id}>
+                                                {prof.name}
+                                            </option>
+                                        ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <ChevronDown className="w-5 h-5 text-neutral-400" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Secondary Reader Dropdown */}
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2 uppercase tracking-wide">
+                                Secondary Reader
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={secondaryReader || ""}
+                                    onChange={(e) => setSecondaryReader(e.target.value || null)}
+                                    className={`w-full px-4 py-4 rounded-xl border-2 bg-white dark:bg-neutral-800 text-base focus:outline-none transition-all cursor-pointer appearance-none pr-12 ${secondaryReader
+                                        ? "border-neutral-400 dark:border-neutral-500 text-neutral-900 dark:text-neutral-100"
+                                        : "border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400"
+                                        } hover:border-neutral-400 dark:hover:border-neutral-500 focus:border-neutral-500 dark:focus:border-neutral-400`}
+                                >
+                                    <option value="">Select your Secondary Reader</option>
+                                    {data.professors
+                                        .filter(prof => prof.id !== firstReader)
+                                        .map(prof => (
+                                            <option key={`second-${prof.id}`} value={prof.id}>
+                                                {prof.name}
+                                            </option>
+                                        ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                                    <ChevronDown className="w-5 h-5 text-neutral-400" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-10">
+                        <button
+                            onClick={() => setReadersSelected(true)}
+                            disabled={!canConfirmReaders}
+                            className={`
+                                w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-semibold transition-all
+                                ${canConfirmReaders
+                                    ? "bg-neutral-900 dark:bg-white text-white dark:text-black hover:opacity-90"
+                                    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed"}
+                            `}
+                        >
+                            Continue to Schedule <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Main Calendar UI (after readers selected)
     return (
         <>
             <div className="w-full">
                 <div className="bg-white dark:bg-neutral-900 p-6 sm:p-10 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800">
+                    {/* Selected Readers Summary */}
+                    <div className="mb-8 p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                                <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                    {firstReaderProf?.name}
+                                </span>
+                                <span className="text-neutral-500"> (First Reader) & </span>
+                                <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                    {secondaryReaderProf?.name}
+                                </span>
+                                <span className="text-neutral-500"> (Secondary Reader)</span>
+                            </div>
+                            <button
+                                onClick={handleChangeReaders}
+                                className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 underline"
+                            >
+                                Change
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between mb-10">
                         <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
                             Select a Date
@@ -255,13 +380,11 @@ export default function StudentCalendar() {
                         </span>
                     </div>
 
-
                     <div className="grid grid-cols-7 gap-2 sm:gap-4 mb-4">
                         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
                             <div key={d} className="text-center text-sm font-bold text-neutral-400 uppercase tracking-wider py-2">{d}</div>
                         ))}
                     </div>
-
 
                     <div className="grid grid-cols-7 gap-2 sm:gap-4">
                         {(() => {
@@ -270,7 +393,6 @@ export default function StudentCalendar() {
                             const days = [];
                             let curr = start;
 
-                            // Padding for first week
                             for (let i = 0; i < start.getDay(); i++) {
                                 days.push(<div key={`pad-${i}`} className="aspect-square" />);
                             }
@@ -304,7 +426,6 @@ export default function StudentCalendar() {
                         })()}
                     </div>
 
-
                     <div className="mt-10 flex items-center justify-center gap-8 text-sm text-neutral-500">
                         <div className="flex items-center gap-2">
                             <span className="w-3 h-3 rounded-full bg-white border-2 border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700"></span>
@@ -318,18 +439,15 @@ export default function StudentCalendar() {
                 </div>
             </div>
 
-
+            {/* Booking Modal */}
             {modalOpen && selectedDate && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4"
                     onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
                 >
-
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
-
                     <div className="relative bg-white dark:bg-neutral-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-
                         <div className="flex items-center justify-between p-6 border-b border-neutral-200 dark:border-neutral-800">
                             <div>
                                 <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
@@ -347,9 +465,9 @@ export default function StudentCalendar() {
                             </button>
                         </div>
 
-
+                        {/* Step Indicator */}
                         <div className="flex items-center justify-center gap-2 px-6 py-4 bg-neutral-50 dark:bg-neutral-800/50">
-                            {[1, 2, 3, 4, 5].map(s => (
+                            {[1, 2, 3, 4].map(s => (
                                 <div key={s} className="flex items-center">
                                     <div className={`
                                         w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
@@ -361,12 +479,12 @@ export default function StudentCalendar() {
                                     `}>
                                         {s < step ? <Check className="w-4 h-4" /> : s}
                                     </div>
-                                    {s < 5 && <div className={`w-6 h-0.5 mx-1 ${s < step ? "bg-green-500" : "bg-neutral-200 dark:bg-neutral-700"}`} />}
+                                    {s < 4 && <div className={`w-6 h-0.5 mx-1 ${s < step ? "bg-green-500" : "bg-neutral-200 dark:bg-neutral-700"}`} />}
                                 </div>
                             ))}
                         </div>
 
-
+                        {/* Step Content */}
                         <div className="p-6 max-h-80 overflow-y-auto">
                             {step === 1 && (
                                 <div>
@@ -392,33 +510,6 @@ export default function StudentCalendar() {
 
                             {step === 2 && currentSlot && (
                                 <div>
-                                    <h4 className="text-lg font-semibold mb-2 text-neutral-900 dark:text-neutral-100">Select 2 Committee Members</h4>
-                                    <p className="text-sm text-neutral-500 mb-4">Choose exactly 2 professors for your defense committee.</p>
-                                    <div className="space-y-2">
-                                        {currentSlot.professors.map(prof => (
-                                            <button
-                                                key={prof.id}
-                                                onClick={() => toggleProfessor(prof.id)}
-                                                className={`
-                                                    w-full px-4 py-3 rounded-xl text-left border-2 transition-all flex items-center justify-between
-                                                    ${selectedProfessors.includes(prof.id)
-                                                        ? "bg-neutral-900 border-neutral-900 text-white dark:bg-white dark:border-white dark:text-black"
-                                                        : "bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 text-neutral-700 dark:text-neutral-300"}
-                                                `}
-                                            >
-                                                <div>
-                                                    <div className="font-medium">{prof.name}</div>
-                                                    <div className={`text-sm ${selectedProfessors.includes(prof.id) ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-500"}`}>{prof.email}</div>
-                                                </div>
-                                                {selectedProfessors.includes(prof.id) && <Check className="w-5 h-5" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {step === 3 && currentSlot && (
-                                <div>
                                     <h4 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Select a Room</h4>
                                     <div className="space-y-2">
                                         {currentSlot.rooms.map(room => (
@@ -440,7 +531,7 @@ export default function StudentCalendar() {
                                 </div>
                             )}
 
-                            {step === 4 && (
+                            {step === 3 && (
                                 <div>
                                     <h4 className="text-lg font-semibold mb-2 text-neutral-900 dark:text-neutral-100">Your Information</h4>
                                     <p className="text-sm text-neutral-500 mb-4">Enter your name and email to complete the booking.</p>
@@ -469,7 +560,7 @@ export default function StudentCalendar() {
                                 </div>
                             )}
 
-                            {step === 5 && (
+                            {step === 4 && (
                                 <div>
                                     <h4 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Confirm Your Booking</h4>
                                     <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4">
@@ -496,11 +587,14 @@ export default function StudentCalendar() {
                                                 {currentSlot?.rooms.find(r => r.id === selectedRoom)?.name}
                                             </span>
                                         </div>
+                                        <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
                                         <div className="flex justify-between">
-                                            <span className="text-neutral-500">Committee</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100 text-right">
-                                                {selectedProfessors.map(id => currentSlot?.professors.find(p => p.id === id)?.name).join(", ")}
-                                            </span>
+                                            <span className="text-neutral-500">First Reader</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{firstReaderProf?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">Secondary Reader</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{secondaryReaderProf?.name}</span>
                                         </div>
                                     </div>
                                     {bookingError && (
@@ -512,7 +606,7 @@ export default function StudentCalendar() {
                             )}
                         </div>
 
-
+                        {/* Footer */}
                         <div className="flex items-center justify-between p-6 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
                             {step > 1 ? (
                                 <button
@@ -525,7 +619,7 @@ export default function StudentCalendar() {
                                 <div />
                             )}
 
-                            {step < 5 ? (
+                            {step < 4 ? (
                                 <button
                                     onClick={() => setStep(s => s + 1)}
                                     disabled={!canProceed()}
