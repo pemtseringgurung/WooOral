@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import type { Availability, DefensePeriod, Professor } from "@/types/index";
 import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
@@ -59,6 +59,7 @@ export default function ProfessorAvailabilityForm() {
   const [selectedSlots, setSelectedSlots] = useState<SlotSelections>({});
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -256,7 +257,11 @@ export default function ProfessorAvailabilityForm() {
         return next;
       });
 
-      setMessage({ type: "success", text: "Availability updated successfully" });
+      setMessage({ type: "success", text: "Availability saved successfully!" });
+
+      // Scroll to top to show success message
+      containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error("Saving availability failed", error);
       setMessage({ type: "error", text: (error as Error).message || "Failed to update availability" });
@@ -271,7 +276,7 @@ export default function ProfessorAvailabilityForm() {
   ) : [];
 
   return (
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8">
       <header className="text-center space-y-2">
         <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
           Set Your Availability
@@ -283,12 +288,20 @@ export default function ProfessorAvailabilityForm() {
 
       {message && (
         <div
-          className={`max-w-3xl mx-auto rounded-md border px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300"
-              : "border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300"
-          }`}
+          className={`max-w-3xl mx-auto rounded-xl border-2 px-5 py-4 text-sm font-medium flex items-center gap-3 ${message.type === "success"
+            ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300"
+            : "border-rose-400 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300"
+            }`}
         >
+          {message.type === "success" ? (
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
           {message.text}
         </div>
       )}
@@ -380,19 +393,16 @@ export default function ProfessorAvailabilityForm() {
                                 key={time}
                                 type="button"
                                 onClick={() => handleToggleSlot(iso, time)}
-                                className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors ${
-                                  isSelected
-                                    ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                    : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
-                                }`}
+                                className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors h-14 flex flex-col justify-center ${isSelected
+                                  ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
+                                  : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
+                                  }`}
                                 aria-pressed={isSelected}
                               >
                                 <span>{labelRange}</span>
-                                {isExisting && (
-                                  <span className="block text-[10px] text-emerald-500 dark:text-emerald-400 mt-1">
-                                    Saved
-                                  </span>
-                                )}
+                                <span className={`block text-[10px] mt-1 ${isExisting ? "text-emerald-500 dark:text-emerald-400" : "invisible"}`}>
+                                  Saved
+                                </span>
                               </button>
                             );
                           })}

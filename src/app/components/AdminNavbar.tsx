@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Lock, MapPin, UserPlus, ChevronDown, Clock } from "lucide-react";
+import { Lock, MapPin, UserPlus, ChevronDown, Clock, Printer } from "lucide-react";
 
 interface AdminNavbarProps {
   activeSection?: string;
@@ -35,6 +35,12 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
       label: "Add Professors",
       icon: <UserPlus className="w-4 h-4" />,
       description: "Manage professor accounts"
+    },
+    {
+      id: "print-defenses",
+      label: "Print Defenses",
+      icon: <Printer className="w-4 h-4" />,
+      description: "View and print scheduled defenses"
     }
   ];
 
@@ -55,11 +61,10 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
               <button
                 key={item.id}
                 onClick={() => handleSectionClick(item.id)}
-                className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                  activeSection === item.id
-                    ? "text-neutral-900 dark:text-neutral-100"
-                    : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
-                }`}
+                className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 ${activeSection === item.id
+                  ? "text-neutral-900 dark:text-neutral-100"
+                  : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  }`}
               >
                 {item.label}
                 {activeSection === item.id && (
@@ -69,8 +74,6 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
             ))}
           </div>
         </div>
-
-        {/* Mobile Navigation */}
         <div className="md:hidden py-3">
           <div className="relative">
             <button
@@ -87,11 +90,10 @@ export default function AdminNavbar({ activeSection = "defense-period", onSectio
                   <button
                     key={item.id}
                     onClick={() => handleSectionClick(item.id)}
-                    className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors duration-150 ${
-                      activeSection === item.id 
-                        ? "text-neutral-900 dark:text-neutral-100 bg-amber-50 dark:bg-amber-900/10" 
-                        : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                    }`}
+                    className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors duration-150 ${activeSection === item.id
+                      ? "text-neutral-900 dark:text-neutral-100 bg-amber-50 dark:bg-amber-900/10"
+                      : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      }`}
                   >
                     {item.label}
                   </button>

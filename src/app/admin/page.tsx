@@ -9,6 +9,7 @@ import SetDefensePeriodForm from "@/app/components/SetDefensePeriodForm";
 import SetPasswordForm from "@/app/components/SetPasswordForm";
 import AdminLoginCard from "@/app/components/AdminLoginCard";
 import RoomAvailabilityForm from "@/app/components/RoomAvailabilityForm";
+import PrintDefensesView from "@/app/components/PrintDefensesView";
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,15 +19,18 @@ export default function AdminDashboard() {
     switch (activeSection) {
       case "add-professors":
         return <AddProfessorForm />;
-      
+
       case "defense-period":
         return <SetDefensePeriodForm />;
-      
+
       case "password":
         return <SetPasswordForm />;
 
       case "room-availability":
         return <RoomAvailabilityForm />;
+
+      case "print-defenses":
+        return <PrintDefensesView />;
 
       default:
         return <SetDefensePeriodForm />;
@@ -36,7 +40,7 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center px-4 relative">
-        <Link 
+        <Link
           href="/"
           className="absolute top-6 left-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all"
         >
@@ -70,13 +74,13 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <Header 
-        showAdminNav={true} 
-        activeSection={activeSection} 
+      <Header
+        showAdminNav={true}
+        activeSection={activeSection}
         onSectionChange={setActiveSection}
         portalType="admin"
       />
-      <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {renderContent()}
       </main>
     </div>
