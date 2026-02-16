@@ -328,7 +328,7 @@ export default function StudentCalendar() {
                     <div className="mt-10">
                         <button
                             onClick={() => setReadersSelected(true)}
-                            disabled={!canConfirmReaders}
+                              disabled={!canConfirmReaders}
                             className={`
                                 w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-semibold transition-all
                                 ${canConfirmReaders

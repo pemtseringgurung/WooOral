@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import type { Availability, DefensePeriod, Room } from "@/types/index";
 import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
@@ -72,6 +72,7 @@ export default function RoomAvailabilityForm() {
   const [isSavingSlots, setIsSavingSlots] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const [roomPendingDelete, setRoomPendingDelete] = useState<Room | null>(null);
+  const modalContentRef = useRef<HTMLDivElement>(null);
 
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -295,7 +296,7 @@ export default function RoomAvailabilityForm() {
         });
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.error ?? "Failed to save availability" );
+          throw new Error(data?.error ?? "Failed to save availability");
         }
         insertedRows = Array.isArray(data) ? data : [data];
       }
@@ -326,7 +327,10 @@ export default function RoomAvailabilityForm() {
         return next;
       });
 
-      setSlotMessage({ type: "success", text: "Availability updated" });
+      setSlotMessage({ type: "success", text: "Availability saved successfully!" });
+
+      // Scroll modal content to top to show success message
+      modalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error("Saving slot selections failed", error);
       setSlotMessage({ type: "error", text: (error as Error).message || "Failed to update availability" });
@@ -384,16 +388,15 @@ export default function RoomAvailabilityForm() {
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           Add rooms and configure available time slots that align with the official defense window.
         </p>
-  {/* Tip removed per design preference */}
+        {/* Tip removed per design preference */}
       </header>
 
       {roomMessage && (
         <div
-          className={`max-w-3xl mx-auto rounded-md border px-4 py-3 text-sm ${
-            roomMessage.type === "success"
-              ? "border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300"
-              : "border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300"
-          }`}
+          className={`max-w-3xl mx-auto rounded-md border px-4 py-3 text-sm ${roomMessage.type === "success"
+            ? "border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300"
+            : "border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300"
+            }`}
         >
           {roomMessage.text}
         </div>
@@ -505,15 +508,23 @@ export default function RoomAvailabilityForm() {
               </button>
             </div>
 
-            <div className="px-5 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div ref={modalContentRef} className="px-5 py-5 space-y-6 max-h-[75vh] overflow-y-auto">
               {slotMessage && (
                 <div
-                  className={`rounded-md border px-4 py-2 text-xs ${
-                    slotMessage.type === "success"
-                      ? "border-emerald-300/60 text-emerald-600 dark:border-emerald-500/40 dark:text-emerald-300"
-                      : "border-rose-300/60 text-rose-600 dark:border-rose-500/40 dark:text-rose-300"
-                  }`}
+                  className={`rounded-xl border-2 px-4 py-3 text-sm font-medium flex items-center gap-3 ${slotMessage.type === "success"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    : "border-rose-400 bg-rose-50 text-rose-700 dark:border-rose-500 dark:bg-rose-900/30 dark:text-rose-300"
+                    }`}
                 >
+                  {slotMessage.type === "success" ? (
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
                   {slotMessage.text}
                 </div>
               )}
@@ -554,19 +565,16 @@ export default function RoomAvailabilityForm() {
                               key={time}
                               type="button"
                               onClick={() => handleToggleSlot(iso, time)}
-                              className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors ${
-                                isSelected
-                                  ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                  : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
-                              }`}
+                              className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors h-14 flex flex-col justify-center ${isSelected
+                                ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
+                                : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
+                                }`}
                               aria-pressed={isSelected}
                             >
                               <span>{labelRange}</span>
-                              {isExisting && (
-                                <span className="block text-[10px] text-emerald-500 dark:text-emerald-400 mt-1">
-                                  Existing slot
-                                </span>
-                              )}
+                              <span className={`block text-[10px] mt-1 ${isExisting ? "text-emerald-500 dark:text-emerald-400" : "invisible"}`}>
+                                Existing slot
+                              </span>
                             </button>
                           );
                         })}
@@ -578,7 +586,7 @@ export default function RoomAvailabilityForm() {
             </div>
 
             <div className="px-5 py-4 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
                 Slots are saved in 1 hour increments from 9:00 AM to 5:00 PM.
               </span>
               <div className="flex items-center gap-2">
