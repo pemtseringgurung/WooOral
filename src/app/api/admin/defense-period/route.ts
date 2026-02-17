@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 export async function GET() {
   const supabase = getSupabaseAdminClient();
@@ -19,6 +20,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const body = await request.json();
   const { id, period_start, period_end } = body;
 

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { format, parseISO, addDays } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Calendar as CalendarIcon, AlertCircle, X, ChevronRight, ChevronLeft, Check, ChevronDown } from "lucide-react";
+import { parseYMDToLocal } from "@/lib/dates";
 
 // Types
 type Period = { period_start: string; period_end: string };
@@ -110,8 +111,8 @@ export default function StudentCalendar() {
 
         const normalizeTime = (t: string) => t.length === 5 ? `${t}:00` : t;
 
-        let curr = parseISO(data.period.period_start);
-        const end = parseISO(data.period.period_end);
+        let curr = parseYMDToLocal(data.period.period_start);
+        const end = parseYMDToLocal(data.period.period_end);
 
         while (curr <= end) {
             const dateStr = format(curr, "yyyy-MM-dd");
@@ -176,7 +177,7 @@ export default function StudentCalendar() {
         switch (step) {
             case 1: return !!selectedTime;
             case 2: return !!selectedRoom;
-            case 3: return studentName.trim().length > 0 && studentEmail.trim().length > 0 && studentEmail.includes("@");
+            case 3: return studentName.trim().length > 0 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(studentEmail.trim());
             default: return false;
         }
     };
@@ -328,7 +329,7 @@ export default function StudentCalendar() {
                     <div className="mt-10">
                         <button
                             onClick={() => setReadersSelected(true)}
-                              disabled={!canConfirmReaders}
+                            disabled={!canConfirmReaders}
                             className={`
                                 w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-semibold transition-all
                                 ${canConfirmReaders
@@ -376,7 +377,7 @@ export default function StudentCalendar() {
                             Select a Date
                         </h2>
                         <span className="text-sm font-medium px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                            {format(parseISO(data.period.period_start), "MMMM yyyy")}
+                            {format(parseYMDToLocal(data.period.period_start), "MMMM yyyy")}
                         </span>
                     </div>
 
@@ -388,8 +389,8 @@ export default function StudentCalendar() {
 
                     <div className="grid grid-cols-7 gap-2 sm:gap-4">
                         {(() => {
-                            const start = parseISO(data.period!.period_start);
-                            const end = parseISO(data.period!.period_end);
+                            const start = parseYMDToLocal(data.period!.period_start);
+                            const end = parseYMDToLocal(data.period!.period_end);
                             const days = [];
                             let curr = start;
 

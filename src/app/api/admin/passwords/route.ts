@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 export async function GET() {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase
@@ -19,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const body = await request.json();
   const {
     id,
@@ -39,7 +46,7 @@ export async function POST(request: Request) {
   const payload = {
     student_password,
     professor_password,
-    admin_password
+    admin_password,
   };
 
   let response;

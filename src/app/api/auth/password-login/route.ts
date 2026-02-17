@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { cookies } from "next/headers";
 
 type Role = "student" | "professor" | "admin";
+
+const COOKIE_NAME = "woo_session";
+const SESSION_MAX_AGE = 60 * 60 * 8; // 8 hours
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -32,10 +36,21 @@ export async function POST(request: Request) {
     role === "student"
       ? data.student_password
       : role === "professor"
-      ? data.professor_password
-      : data.admin_password;
+        ? data.professor_password
+        : data.admin_password;
 
   const success = expected === password;
+
+  if (success) {
+    const cookieStore = await cookies();
+    cookieStore.set(COOKIE_NAME, role, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: SESSION_MAX_AGE,
+      path: "/",
+    });
+  }
 
   return NextResponse.json({ success });
 }

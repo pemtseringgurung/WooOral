@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { sendBookingEmails } from "@/lib/email";
 
 export async function POST(request: Request) {
     const supabase = getSupabaseAdminClient();
@@ -17,7 +18,6 @@ export async function POST(request: Request) {
         }
 
         // 1. Upsert Student
-        // Check if student exists
         let studentId;
         const { data: existingStudent, error: fetchError } = await supabase
             .from("students")
@@ -31,9 +31,7 @@ export async function POST(request: Request) {
 
         if (existingStudent) {
             studentId = existingStudent.id;
-            // Optional: Update name if changed? For now, let's just use the ID.
         } else {
-            // Create new student
             const { data: newStudent, error: createError } = await supabase
                 .from("students")
                 .insert([{ name: studentName, email: studentEmail }])
@@ -42,6 +40,20 @@ export async function POST(request: Request) {
 
             if (createError) throw new Error(`Student creation error: ${createError.message}`);
             studentId = newStudent.id;
+        }
+
+        // Check if student already has a defense booked
+        const { data: existingDefense } = await supabase
+            .from("defenses")
+            .select("id")
+            .eq("student_id", studentId)
+            .limit(1);
+
+        if (existingDefense && existingDefense.length > 0) {
+            return NextResponse.json(
+                { error: "You already have a defense scheduled. Please contact an administrator to reschedule." },
+                { status: 409 }
+            );
         }
 
         // 2. Create Defense
@@ -57,7 +69,6 @@ export async function POST(request: Request) {
             .single();
 
         if (defenseError) {
-            // Handle double booking error gracefully if possible, but unique constraint will catch it
             if (defenseError.code === "23505") {
                 return NextResponse.json({ error: "This slot has just been taken. Please choose another." }, { status: 409 });
             }
@@ -67,7 +78,7 @@ export async function POST(request: Request) {
         const defenseId = defense.id;
 
         // 3. Create Committee Members
-        const committeeInserts = professorIds.map(profId => ({
+        const committeeInserts = professorIds.map((profId: string) => ({
             defense_id: defenseId,
             professor_id: profId
         }));
@@ -77,12 +88,35 @@ export async function POST(request: Request) {
             .insert(committeeInserts);
 
         if (committeeError) {
-            // Rollback defense if committee fails? 
-            // Ideally we'd use a transaction/RPC, but for now let's just error out.
-            // Manual cleanup:
             await supabase.from("defenses").delete().eq("id", defenseId);
             throw new Error(`Committee assignment error: ${committeeError.message}`);
         }
+
+        // 4. Send confirmation emails (fire-and-forget, don't block response)
+        console.log("professorIds from request:", professorIds);
+
+        const { data: professors, error: profFetchError } = await supabase
+            .from("professors")
+            .select("name, email")
+            .in("id", professorIds);
+
+        console.log("professors fetched for email:", professors);
+        if (profFetchError) console.error("Prof fetch error:", profFetchError);
+
+        const { data: room } = await supabase
+            .from("rooms")
+            .select("name")
+            .eq("id", roomId)
+            .single();
+
+        sendBookingEmails({
+            studentName,
+            studentEmail,
+            professors: professors ?? [],
+            date,
+            time,
+            roomName: room?.name ?? "TBD",
+        }).catch((err) => console.error("Email send error:", err));
 
         return NextResponse.json({ success: true, defenseId });
 
@@ -92,4 +126,3 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
-

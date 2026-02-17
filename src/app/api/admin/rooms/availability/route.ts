@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 const selectColumns = "id, person_id, person_type, slot_date, day_of_week, start_time, end_time, created_at";
 
@@ -33,6 +34,9 @@ type AvailabilityRecord = {
 };
 
 export async function GET() {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase
@@ -51,6 +55,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
   const body = await request.json().catch(() => null);
 
@@ -62,25 +69,25 @@ export async function POST(request: Request) {
 
   const records: AvailabilityPayload[] = Array.isArray(slots)
     ? (slots as SlotRequest[]).map((slot) => ({
-        person_id: slot.room_id ?? room_id,
-        person_type: "room",
-        slot_date: slot.slot_date,
-        day_of_week: null,
-        start_time: slot.start_time,
-        end_time: slot.end_time,
-        id: slot.id
-      }))
+      person_id: slot.room_id ?? room_id,
+      person_type: "room",
+      slot_date: slot.slot_date,
+      day_of_week: null,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      id: slot.id
+    }))
     : [
-        {
-          person_id: room_id,
-          person_type: "room",
-          slot_date: slot_date as string,
-          day_of_week: day_of_week ?? null,
-          start_time,
-          end_time,
-          id
-        }
-      ];
+      {
+        person_id: room_id,
+        person_type: "room",
+        slot_date: slot_date as string,
+        day_of_week: day_of_week ?? null,
+        start_time,
+        end_time,
+        id
+      }
+    ];
 
   if (records.some((r) => !r.person_id || !r.start_time || !r.end_time || !r.slot_date)) {
     return NextResponse.json({ error: "slot_date and start/end times are required" }, { status: 400 });
@@ -134,6 +141,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
