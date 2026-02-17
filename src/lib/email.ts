@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 const FROM_EMAIL = "IS Defense Scheduler <noreply@pemgrg.com>";
 
@@ -85,7 +89,7 @@ export async function sendBookingEmails(data: BookingEmailData) {
   try {
     for (let i = 0; i < emailConfigs.length; i++) {
       if (i > 0) await new Promise((r) => setTimeout(r, 600));
-      const result = await resend.emails.send(emailConfigs[i]);
+      const result = await getResend().emails.send(emailConfigs[i]);
       if (result.error) {
         console.error(`Email FAILED (to: ${emailConfigs[i].to}):`, result.error);
       } else {
