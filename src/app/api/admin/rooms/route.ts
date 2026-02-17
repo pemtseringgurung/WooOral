@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 export async function GET() {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
 
   const { data, error } = await supabase
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
   const body = await request.json().catch(() => null);
 
@@ -79,12 +86,36 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
   if (!id) {
     return NextResponse.json({ error: "Missing room id" }, { status: 400 });
+  }
+
+  // Check if room is used in any defenses
+  const { data: roomDefenses, error: defenseCheckError } = await supabase
+    .from("defenses")
+    .select("id")
+    .eq("room_id", id)
+    .limit(1);
+
+  if (defenseCheckError) {
+    return NextResponse.json(
+      { error: `Failed to check defense assignments: ${defenseCheckError.message}` },
+      { status: 500 }
+    );
+  }
+
+  if (roomDefenses && roomDefenses.length > 0) {
+    return NextResponse.json(
+      { error: "Cannot delete this room because it is assigned to one or more scheduled defenses. Remove those defenses first." },
+      { status: 409 }
+    );
   }
 
   const availabilityResponse = await supabase

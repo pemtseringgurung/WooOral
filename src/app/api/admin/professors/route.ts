@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 export async function GET() {
   const supabase = getSupabaseAdminClient();
@@ -17,12 +18,36 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+  const authError = await requireAdmin();
+  if (authError) return authError;
+
   const supabase = getSupabaseAdminClient();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
   if (!id) {
     return NextResponse.json({ error: "Missing professor id" }, { status: 400 });
+  }
+
+  // Check if professor is on any defense committees
+  const { data: committees, error: committeeCheckError } = await supabase
+    .from("defense_committee")
+    .select("id")
+    .eq("professor_id", id)
+    .limit(1);
+
+  if (committeeCheckError) {
+    return NextResponse.json(
+      { error: `Failed to check defense assignments: ${committeeCheckError.message}` },
+      { status: 500 }
+    );
+  }
+
+  if (committees && committees.length > 0) {
+    return NextResponse.json(
+      { error: "Cannot delete this professor because they are assigned to one or more scheduled defenses. Remove those defenses first." },
+      { status: 409 }
+    );
   }
 
   // First, delete all availability slots for this professor

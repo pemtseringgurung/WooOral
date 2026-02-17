@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabaseAdmin";
+import { requireAdmin } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+    const authError = await requireAdmin();
+    if (authError) return authError;
+
     const supabase = getSupabaseAdminClient();
 
     try {
@@ -51,6 +55,9 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+    const authError = await requireAdmin();
+    if (authError) return authError;
+
     const supabase = getSupabaseAdminClient();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
