@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { format, addDays } from "date-fns";
-import { Calendar as CalendarIcon, AlertCircle, X, ChevronRight, ChevronLeft, Check, ChevronDown } from "lucide-react";
+import { Calendar as CalendarIcon, AlertCircle, X, ChevronRight, ChevronLeft, Check, ChevronDown, CheckCircle2 } from "lucide-react";
 import { parseYMDToLocal } from "@/lib/dates";
 
 // Types
@@ -60,7 +60,7 @@ export default function StudentCalendar() {
     // Modal State
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [step, setStep] = useState(1); // 1: Time, 2: Room, 3: Student Info, 4: Confirm
+    const [step, setStep] = useState(1); // 1: Time, 2: Room, 3: Student Info, 4: Confirm, 5: Success
 
     // Booking Selections
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -70,6 +70,10 @@ export default function StudentCalendar() {
 
     const [bookingError, setBookingError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [bookingSuccess, setBookingSuccess] = useState<{
+        date: string; time: string; room: string;
+        firstReader: string; secondaryReader: string;
+    } | null>(null);
 
     // Fetch Data
     useEffect(() => {
@@ -203,11 +207,26 @@ export default function StudentCalendar() {
             const result = await res.json();
 
             if (!res.ok) {
-                throw new Error(result.error || "Failed to book defense");
+                if (res.status === 409 && result.error?.includes("already have a defense")) {
+                    setBookingError("Looks like you already have a defense scheduled. Contact the department to reschedule.");
+                } else {
+                    setBookingError(result.error || "Failed to book defense");
+                }
+                return;
             }
 
-            // Success - close modal and refresh data
-            closeModal();
+            // Success — show confirmation step
+            const roomName = currentSlot?.rooms.find(r => r.id === selectedRoom)?.name ?? "";
+            setBookingSuccess({
+                date: selectedDate ? format(selectedDate, "EEEE, MMMM d, yyyy") : "",
+                time: selectedTime ? formatTime(selectedTime) : "",
+                room: roomName,
+                firstReader: firstReaderProf?.name ?? "",
+                secondaryReader: secondaryReaderProf?.name ?? "",
+            });
+            setStep(5);
+
+            // Refresh data in background
             const refreshRes = await fetch("/api/student/initial-data");
             if (refreshRes.ok) {
                 const refreshData = await refreshRes.json();
@@ -605,51 +624,93 @@ export default function StudentCalendar() {
                                     )}
                                 </div>
                             )}
+
+                            {step === 5 && bookingSuccess && (
+                                <div className="text-center py-4">
+                                    <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                                    <h4 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">You&apos;re All Set!</h4>
+                                    <p className="text-neutral-500 mb-6">Your defense has been booked. A confirmation email is on the way.</p>
+                                    <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 text-left">
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">Date</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{bookingSuccess.date}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">Time</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{bookingSuccess.time}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">Room</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{bookingSuccess.room}</span>
+                                        </div>
+                                        <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">First Reader</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{bookingSuccess.firstReader}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-neutral-500">Secondary Reader</span>
+                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{bookingSuccess.secondaryReader}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer */}
                         <div className="flex items-center justify-between p-6 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
-                            {step > 1 ? (
+                            {step === 5 ? (
                                 <button
-                                    onClick={() => setStep(s => s - 1)}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                    onClick={closeModal}
+                                    className="w-full px-6 py-3 rounded-xl text-sm font-semibold bg-neutral-900 dark:bg-white text-white dark:text-black hover:opacity-90 transition-all"
                                 >
-                                    <ChevronLeft className="w-4 h-4" /> Back
+                                    Done
                                 </button>
                             ) : (
-                                <div />
-                            )}
-
-                            {step < 4 ? (
-                                <button
-                                    onClick={() => setStep(s => s + 1)}
-                                    disabled={!canProceed()}
-                                    className={`
-                                        flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all
-                                        ${canProceed()
-                                            ? "bg-neutral-900 dark:bg-white text-white dark:text-black hover:opacity-90"
-                                            : "bg-neutral-200 dark:bg-neutral-700 text-neutral-400 cursor-not-allowed"}
-                                    `}
-                                >
-                                    Next <ChevronRight className="w-4 h-4" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleConfirm}
-                                    disabled={isSubmitting}
-                                    className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"} text-white`}
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            Booking...
-                                        </>
+                                <>
+                                    {step > 1 ? (
+                                        <button
+                                            onClick={() => setStep(s => s - 1)}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" /> Back
+                                        </button>
                                     ) : (
-                                        <>
-                                            <Check className="w-4 h-4" /> Confirm Booking
-                                        </>
+                                        <div />
                                     )}
-                                </button>
+
+                                    {step < 4 ? (
+                                        <button
+                                            onClick={() => setStep(s => s + 1)}
+                                            disabled={!canProceed()}
+                                            className={`
+                                                flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all
+                                                ${canProceed()
+                                                    ? "bg-neutral-900 dark:bg-white text-white dark:text-black hover:opacity-90"
+                                                    : "bg-neutral-200 dark:bg-neutral-700 text-neutral-400 cursor-not-allowed"}
+                                            `}
+                                        >
+                                            Next <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleConfirm}
+                                            disabled={isSubmitting}
+                                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-colors ${isSubmitting ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"} text-white`}
+                                        >
+                                            {isSubmitting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    Booking...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Check className="w-4 h-4" /> Confirm Booking
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
