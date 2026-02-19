@@ -582,45 +582,50 @@ export default function StudentCalendar() {
 
                             {step === 4 && (
                                 <div>
-                                    <h4 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Confirm Your Booking</h4>
-                                    <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4">
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Student</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{studentName}</span>
+                                    {bookingError ? (
+                                        <div className="text-center py-4">
+                                            <AlertCircle className="w-14 h-14 text-red-500 mx-auto mb-4" />
+                                            <h4 className="text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-2">Booking Failed</h4>
+                                            <p className="text-red-500 dark:text-red-400 text-sm">{bookingError}</p>
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Email</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{studentEmail}</span>
-                                        </div>
-                                        <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Date</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{format(selectedDate, "MMM d, yyyy")}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Time</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{selectedTime && formatTime(selectedTime)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Room</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">
-                                                {currentSlot?.rooms.find(r => r.id === selectedRoom)?.name}
-                                            </span>
-                                        </div>
-                                        <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">First Reader</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{firstReaderProf?.name}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-neutral-500">Secondary Reader</span>
-                                            <span className="font-medium text-neutral-900 dark:text-neutral-100">{secondaryReaderProf?.name}</span>
-                                        </div>
-                                    </div>
-                                    {bookingError && (
-                                        <div className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
-                                            {bookingError}
-                                        </div>
+                                    ) : (
+                                        <>
+                                            <h4 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Confirm Your Booking</h4>
+                                            <div className="space-y-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4">
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Student</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{studentName}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Email</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{studentEmail}</span>
+                                                </div>
+                                                <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Date</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{format(selectedDate, "MMM d, yyyy")}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Time</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{selectedTime && formatTime(selectedTime)}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Room</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                                                        {currentSlot?.rooms.find(r => r.id === selectedRoom)?.name}
+                                                    </span>
+                                                </div>
+                                                <div className="border-t border-neutral-200 dark:border-neutral-700 my-2"></div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">First Reader</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{firstReaderProf?.name}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-neutral-500">Secondary Reader</span>
+                                                    <span className="font-medium text-neutral-900 dark:text-neutral-100">{secondaryReaderProf?.name}</span>
+                                                </div>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -659,12 +664,12 @@ export default function StudentCalendar() {
 
                         {/* Footer */}
                         <div className="flex items-center justify-between p-6 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
-                            {step === 5 ? (
+                            {step === 5 || (step === 4 && bookingError) ? (
                                 <button
                                     onClick={closeModal}
                                     className="w-full px-6 py-3 rounded-xl text-sm font-semibold bg-neutral-900 dark:bg-white text-white dark:text-black hover:opacity-90 transition-all"
                                 >
-                                    Done
+                                    {step === 5 ? "Done" : "Close"}
                                 </button>
                             ) : (
                                 <>
