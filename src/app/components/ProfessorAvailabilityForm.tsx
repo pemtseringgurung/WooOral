@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState, useRef } from "react"
 import type { Availability, DefensePeriod, Professor } from "@/types/index";
 import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
-const SLOT_START_HOUR = 9;
+const SLOT_START_HOUR = 8;
 const SLOT_END_HOUR = 17;
 const SLOT_INTERVAL_MINUTES = 60;
 

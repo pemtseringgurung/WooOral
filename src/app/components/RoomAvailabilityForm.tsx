@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState, useRef } from "react"
 import type { Availability, DefensePeriod, Room } from "@/types/index";
 import { parseYMDToLocal, formatDisplayLong } from "@/lib/dates";
 
-const SLOT_START_HOUR = 9;
+const SLOT_START_HOUR = 8;
 const SLOT_END_HOUR = 17; // exclusive for start time (last slot ends at 5pm)
 const SLOT_INTERVAL_MINUTES = 60;
 
@@ -587,7 +587,7 @@ export default function RoomAvailabilityForm() {
 
             <div className="px-5 py-4 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
               <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                Slots are saved in 1 hour increments from 9:00 AM to 5:00 PM.
+                Slots are saved in 1 hour increments from 8:00 AM to 5:00 PM.
               </span>
               <div className="flex items-center gap-2">
                 <button
