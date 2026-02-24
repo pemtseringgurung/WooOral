@@ -52,6 +52,7 @@ export default function ProfessorAvailabilityForm() {
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [defensePeriod, setDefensePeriod] = useState<DefensePeriod | null>(null);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [roomAvailabilities, setRoomAvailabilities] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedProfessorId, setSelectedProfessorId] = useState<string>("");
@@ -64,7 +65,7 @@ export default function ProfessorAvailabilityForm() {
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchProfessors(), fetchDefensePeriod(), fetchAvailabilities()]);
+      await Promise.all([fetchProfessors(), fetchDefensePeriod(), fetchAvailabilities(), fetchRoomAvailabilities()]);
     } catch (error) {
       console.error("Failed to load professor availability data", error);
     } finally {
@@ -100,6 +101,13 @@ export default function ProfessorAvailabilityForm() {
     setAvailabilities(data ?? []);
   };
 
+  const fetchRoomAvailabilities = async () => {
+    const res = await fetch("/api/professor/room-availability", { method: "GET" });
+    if (!res.ok) throw new Error("Room availability fetch failed");
+    const data = (await res.json()) as Availability[];
+    setRoomAvailabilities(data ?? []);
+  };
+
   const timeBlocks = useMemo(() => {
     const blocks: string[] = [];
     const startMinutes = SLOT_START_HOUR * 60;
@@ -111,6 +119,17 @@ export default function ProfessorAvailabilityForm() {
     }
     return blocks;
   }, []);
+
+  // Build a set of date+time combos where at least one room is available
+  const roomSlotSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const slot of roomAvailabilities) {
+      if (slot.person_type === "room" && slot.slot_date) {
+        set.add(`${slot.slot_date}|${slot.start_time.slice(0, 5)}`);
+      }
+    }
+    return set;
+  }, [roomAvailabilities]);
 
   const dateRange = useMemo(() => {
     if (!defensePeriod) return [] as Array<{ iso: string; label: string }>;
@@ -382,30 +401,36 @@ export default function ProfessorAvailabilityForm() {
                           )}
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {timeBlocks.map(time => {
-                            const isSelected = selectedForDate.has(time);
-                            const isExisting = (existingSlotsByDate[iso] ?? []).some(
-                              slot => slot.start_time.slice(0, 5) === time
-                            );
-                            const labelRange = `${time} – ${addMinutesToTime(time, SLOT_INTERVAL_MINUTES)}`;
-                            return (
-                              <button
-                                key={time}
-                                type="button"
-                                onClick={() => handleToggleSlot(iso, time)}
-                                className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors h-14 flex flex-col justify-center ${isSelected
-                                  ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
-                                  : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
-                                  }`}
-                                aria-pressed={isSelected}
-                              >
-                                <span>{labelRange}</span>
-                                <span className={`block text-[10px] mt-1 ${isExisting ? "text-emerald-500 dark:text-emerald-400" : "invisible"}`}>
-                                  Saved
-                                </span>
-                              </button>
-                            );
-                          })}
+                          {timeBlocks.filter(time => roomSlotSet.has(`${iso}|${time}`)).length === 0 ? (
+                            <p className="col-span-full text-xs text-neutral-400 dark:text-neutral-500 italic py-2">
+                              No rooms available on this date
+                            </p>
+                          ) : (
+                            timeBlocks.filter(time => roomSlotSet.has(`${iso}|${time}`)).map(time => {
+                              const isSelected = selectedForDate.has(time);
+                              const isExisting = (existingSlotsByDate[iso] ?? []).some(
+                                slot => slot.start_time.slice(0, 5) === time
+                              );
+                              const labelRange = `${time} – ${addMinutesToTime(time, SLOT_INTERVAL_MINUTES)}`;
+                              return (
+                                <button
+                                  key={time}
+                                  type="button"
+                                  onClick={() => handleToggleSlot(iso, time)}
+                                  className={`text-xs font-medium rounded-md border px-3 py-2 text-left transition-colors h-14 flex flex-col justify-center ${isSelected
+                                    ? "bg-white text-neutral-900 border-neutral-900 shadow-sm dark:bg-neutral-100 dark:text-neutral-900"
+                                    : "bg-white/60 dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500"
+                                    }`}
+                                  aria-pressed={isSelected}
+                                >
+                                  <span>{labelRange}</span>
+                                  <span className={`block text-[10px] mt-1 ${isExisting ? "text-emerald-500 dark:text-emerald-400" : "invisible"}`}>
+                                    Saved
+                                  </span>
+                                </button>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
                     );
