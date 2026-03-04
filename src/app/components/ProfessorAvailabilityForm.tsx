@@ -11,6 +11,15 @@ const SLOT_INTERVAL_MINUTES = 60;
 type SlotSelections = Record<string, Set<string>>;
 type SlotsByDate = Record<string, Availability[]>;
 
+type Meeting = {
+  id: string;
+  date: string;
+  time: string;
+  students?: { name: string };
+  rooms?: { name: string };
+  defense_committee: { professor_id: string }[];
+};
+
 const formatTime = (hours: number, minutes: number) =>
   `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 
@@ -53,6 +62,7 @@ export default function ProfessorAvailabilityForm() {
   const [defensePeriod, setDefensePeriod] = useState<DefensePeriod | null>(null);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [roomAvailabilities, setRoomAvailabilities] = useState<Availability[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedProfessorId, setSelectedProfessorId] = useState<string>("");
@@ -65,7 +75,14 @@ export default function ProfessorAvailabilityForm() {
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([fetchProfessors(), fetchDefensePeriod(), fetchAvailabilities(), fetchRoomAvailabilities()]);
+      await Promise.all([
+        fetchProfessors(),
+        fetchDefensePeriod(),
+        fetchAvailabilities(),
+        fetchRoomAvailabilities(),
+      ]);
+      // Meetings are non-critical — fetch separately so a failure doesn't break the page
+      fetchMeetings().catch(err => console.error("Failed to load meetings", err));
     } catch (error) {
       console.error("Failed to load professor availability data", error);
     } finally {
@@ -106,6 +123,13 @@ export default function ProfessorAvailabilityForm() {
     if (!res.ok) throw new Error("Room availability fetch failed");
     const data = (await res.json()) as Availability[];
     setRoomAvailabilities(data ?? []);
+  };
+
+  const fetchMeetings = async () => {
+    const res = await fetch("/api/professor/meetings", { method: "GET" });
+    if (!res.ok) throw new Error("Meetings fetch failed");
+    const data = (await res.json()) as Meeting[];
+    setMeetings(data ?? []);
   };
 
   const timeBlocks = useMemo(() => {
@@ -294,6 +318,13 @@ export default function ProfessorAvailabilityForm() {
     slot => slot.person_type === "professor" && slot.person_id === selectedProfessorId && slot.slot_date
   ) : [];
 
+  const professorMeetings = useMemo(() => {
+    if (!selectedProfessorId) return [];
+    return meetings.filter(m =>
+      m.defense_committee.some(c => c.professor_id === selectedProfessorId)
+    );
+  }, [meetings, selectedProfessorId]);
+
   return (
     <div ref={containerRef} className="space-y-8">
       <header className="text-center space-y-2">
@@ -360,13 +391,40 @@ export default function ProfessorAvailabilityForm() {
             </div>
 
             {selectedProfessor && (
-              <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60 bg-white/50 dark:bg-neutral-900/40 px-5 py-4">
-                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                  {selectedProfessor.name}
-                </p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {professorSlots.length} time slot{professorSlots.length === 1 ? "" : "s"} configured
-                </p>
+              <div className="rounded-md border border-neutral-200/80 dark:border-neutral-800/60 bg-white/50 dark:bg-neutral-900/40 px-5 py-4 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    {selectedProfessor.name}
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {professorSlots.length} time slot{professorSlots.length === 1 ? "" : "s"} configured
+                  </p>
+                </div>
+
+                {professorMeetings.length > 0 && (
+                  <div className="pt-4 border-t border-neutral-200/80 dark:border-neutral-800/60 space-y-3">
+                    <h6 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                      Scheduled Defenses
+                    </h6>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {professorMeetings.map(meeting => (
+                        <div key={meeting.id} className="flex items-start justify-between p-3 rounded-md border border-neutral-200/80 dark:border-neutral-800/60 bg-white dark:bg-neutral-900 shadow-sm text-sm">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-neutral-900 dark:text-neutral-100 leading-none">
+                              {meeting.students?.name ?? "Unknown Student"}
+                            </span>
+                            <span className="text-xs text-neutral-500 dark:text-neutral-400 leading-none">
+                              {formatDisplayLong(parseYMDToLocal(meeting.date))} • {meeting.rooms?.name ?? "TBD"}
+                            </span>
+                          </div>
+                          <div className="font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded text-xs">
+                            {meeting.time.slice(0, 5)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -381,6 +439,7 @@ export default function ProfessorAvailabilityForm() {
                 <>
                   {dateRange.map(({ iso, label }) => {
                     const selectedForDate = selectedSlots[iso] ?? new Set<string>();
+
                     return (
                       <div key={iso} className="space-y-3">
                         <div className="flex items-center justify-between">
