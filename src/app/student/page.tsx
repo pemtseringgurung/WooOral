@@ -6,9 +6,11 @@ import Link from "next/link";
 import Header from "@/app/components/Header";
 import PasswordLoginCard from "@/app/components/PasswordLoginCard";
 import StudentCalendar from "@/app/components/StudentCalendar";
+import ScheduleViewer from "@/app/components/ScheduleViewer";
 
 export default function StudentPortal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [viewSchedule, setViewSchedule] = useState(false);
 
   if (!isAuthenticated) {
     return (
@@ -52,13 +54,37 @@ export default function StudentPortal() {
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       <Header portalType="student" />
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Schedule Your Defense</h1>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-            First select your readers, then choose an available date and time to book your defense.
-          </p>
-        </div>
-        <StudentCalendar />
+        {viewSchedule ? (
+          <>
+            <div className="mb-6">
+              <button
+                onClick={() => setViewSchedule(false)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-all mb-4"
+              >
+                ← Back
+              </button>
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                Defense Schedule
+              </h1>
+              <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                View all currently scheduled oral defense presentations.
+              </p>
+            </div>
+            <ScheduleViewer />
+          </>
+        ) : (
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                Schedule Your Defense
+              </h1>
+              <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                First select your readers, then choose an available date and time to book your defense.
+              </p>
+            </div>
+            <StudentCalendar onViewSchedule={() => setViewSchedule(true)} />
+          </>
+        )}
       </main>
     </div>
   );

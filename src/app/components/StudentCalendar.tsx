@@ -46,7 +46,7 @@ const formatTime = (t: string) => {
     return `${displayHour}:${m} ${ampm}`;
 };
 
-export default function StudentCalendar() {
+export default function StudentCalendar({ onViewSchedule }: { onViewSchedule?: () => void }) {
     // State
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -359,6 +359,17 @@ export default function StudentCalendar() {
                             Continue to Schedule <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
+
+                    {onViewSchedule && (
+                        <div className="mt-4 text-center">
+                            <button
+                                onClick={onViewSchedule}
+                                className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                            >
+                                Forgot if you signed up? <span className="underline">Check the schedule</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
